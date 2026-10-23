@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art of Raziel | Sacred Technology</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark-bg: #0a0a0a;
+            --card-bg: #161616;
+            --glow: rgba(212, 175, 55, 0.3);
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            background: radial-gradient(circle at center, #1a1a1a 0%, var(--dark-bg) 100%);
+        }
+
+        /* אפקט כוכב נופל */
+        .shooting-star {
+            position: fixed;
+            top: 0; left: 70%;
+            width: 2px; height: 2px;
+            background: linear-gradient(90deg, #fff, transparent);
+            animation: shoot 4s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes shoot {
+            0% { transform: translateX(0) translateY(0) rotate(-45deg) scale(0); opacity: 1; }
+            100% { transform: translateX(-1000px) translateY(1000px) rotate(-45deg) scale(1); opacity: 0; }
+        }
+
+        .hero {
+            height: 60vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .gold-quill {
+            font-size: 4rem;
+            filter: drop-shadow(0 0 10px var(--gold));
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--gold);
+            box-shadow: 0 0 30px var(--glow);
+        }
+
+        .product-anim {
+            width: 100px; height: 100px;
+            margin: 0 auto 20px;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            animation: rotate 15s linear infinite;
+        }
+
+        .cta-button {
+            background: transparent;
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .cta-button:hover {
+            background: var(--gold);
+            color: black;
+        }
+
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="shooting-star"></div>
+
+    <section class="hero" data-aos="fade-down">
+        <div class="gold-quill">✒️</div>
+        <h1 style="font-size: 3.5rem; color: var(--gold); margin: 0;">ART OF RAZIEL</h1>
+        <p style="color: #888;">אמנות ואמונה בטהרה מאת רזיאל יוסף</p>
+    </section>
+
+    <div id="product-container" class="product-grid"></div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1000 });
+
+        async function loadCatalog() {
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                const container = document.getElementById('product-container');
+                
+                container.innerHTML = ''; // ניקוי לפני טעינה
+
+                products.forEach((p, index) => {
+                    let icon = p.category === 'מזוזות' ? '📜' : '🛡️';
+                    container.innerHTML += `
+                        <div class="card" data-aos="fade-up" data-aos-delay="${index * 100}">
+                            <div class="product-anim">${icon}</div>
+                            <h3 style="color: var(--gold);">${p.title}</h3>
+                            <p style="color: #666; font-size: 0.9rem;">${p.description}</p>
+                            <div style="font-size: 1.5rem; margin: 15px 0;">$${p.price_usd}</div>
+                            <button class="cta-button" onclick="window.location.href='https://wa.me/9720547302757'">הזמנה בטהרה</button>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("שגיאה בטעינת הקטלוג:", error);
+            }
+        }
+
+        loadCatalog();
+    </script>
+</body>
+</html>

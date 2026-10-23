@@ -1,0 +1,239 @@
+/* Admin Login Modal Styles - Tech Theme */
+.admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(2, 2, 2, 0.95);
+  backdrop-filter: blur(15px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  animation: adminModalFadeIn 0.3s ease-out;
+}
+
+@keyframes adminModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.admin-modal-container {
+  position: relative;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.98) 0%, rgba(10, 10, 10, 0.99) 100%);
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #ff0064, #00d4ff, #ff0064) 1;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  padding: 0;
+  box-shadow: 
+    0 0 60px rgba(255, 0, 100, 0.5),
+    0 0 40px rgba(0, 212, 255, 0.4),
+    inset 0 0 50px rgba(0, 212, 255, 0.15);
+  animation: adminModalSlideIn 0.4s ease-out;
+  overflow: hidden;
+}
+
+@keyframes adminModalSlideIn {
+  from {
+    transform: translateY(-50px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.admin-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: 1px solid rgba(255, 0, 100, 0.5);
+  color: rgba(255, 107, 107, 0.8);
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.admin-modal-close:hover {
+  background: rgba(255, 0, 100, 0.3);
+  border-color: #ff0064;
+  color: #ff6b6b;
+  transform: rotate(90deg);
+  box-shadow: 0 0 15px rgba(255, 0, 100, 0.6);
+}
+
+.admin-modal-header {
+  padding: 40px 30px 25px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 0, 100, 0.3);
+  background: linear-gradient(180deg, rgba(255, 0, 100, 0.1) 0%, transparent 100%);
+}
+
+.admin-modal-icon {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 0 25px rgba(255, 0, 100, 0.9));
+  animation: adminIconPulse 2s ease-in-out infinite;
+  margin-bottom: 15px;
+  display: inline-block;
+}
+
+@keyframes adminIconPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 25px rgba(255, 0, 100, 0.9));
+  }
+  50% {
+    transform: scale(1.15) rotate(5deg);
+    filter: drop-shadow(0 0 40px rgba(255, 0, 100, 1));
+  }
+}
+
+.admin-modal-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: 1.8rem;
+  background: linear-gradient(135deg, #ff0064, #00d4ff, #ff0064);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 0 20px rgba(255, 0, 100, 0.5);
+}
+
+.admin-modal-form {
+  padding: 30px;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 14px 18px;
+  margin-bottom: 15px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 0, 100, 0.4);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: 'Assistant', sans-serif;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 
+    inset 0 0 10px rgba(255, 0, 100, 0.1),
+    0 0 10px rgba(0, 212, 255, 0.1);
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: #ff0064;
+  box-shadow: 
+    0 0 20px rgba(255, 0, 100, 0.6),
+    0 0 15px rgba(0, 212, 255, 0.4),
+    inset 0 0 15px rgba(255, 0, 100, 0.2);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.admin-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-error {
+  background: rgba(255, 0, 0, 0.3);
+  border: 1px solid #ff6b6b;
+  color: #ff6b6b;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 0.9rem;
+  animation: adminErrorShake 0.5s ease;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+}
+
+@keyframes adminErrorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.admin-submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, rgba(255, 0, 100, 0.2) 0%, rgba(0, 212, 255, 0.2) 100%);
+  border: 2px solid #ff0064;
+  color: #00d4ff;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 0 20px rgba(255, 0, 100, 0.4),
+    0 0 15px rgba(0, 212, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 0, 100, 0.5), transparent);
+  transition: left 0.5s ease;
+}
+
+.admin-submit-btn:hover::before {
+  left: 100%;
+}
+
+.admin-submit-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 0, 100, 0.4) 0%, rgba(0, 212, 255, 0.4) 100%);
+  color: #ffffff;
+  box-shadow: 
+    0 0 30px rgba(255, 0, 100, 0.8),
+    0 0 25px rgba(0, 212, 255, 0.6);
+  transform: translateY(-2px);
+  border-color: #00d4ff;
+}
+
+.admin-submit-btn:active {
+  transform: translateY(0);
+}
+
+.admin-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-modal-container {
+    width: 95%;
+    max-width: 350px;
+  }
+
+  .admin-modal-title {
+    font-size: 1.5rem;
+  }
+}

@@ -1,0 +1,181 @@
+/* Global Map Widget Styles - High-Tech Dark/Gold Theme */
+
+.global-map-widget {
+  background: rgba(10, 10, 10, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 8px;
+  padding: 25px;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-widget-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.map-icon {
+  color: var(--gold-primary);
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+}
+
+.map-widget-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  color: var(--gold-primary);
+  margin: 0;
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  background: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.05) 0%, rgba(2, 2, 2, 0.8) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.world-map-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.continents {
+  opacity: 0.3;
+}
+
+.continent-path {
+  fill: rgba(212, 175, 55, 0.1);
+  stroke: rgba(212, 175, 55, 0.2);
+  stroke-width: 0.5;
+}
+
+.order-marker {
+  cursor: pointer;
+}
+
+.pulse-ring {
+  fill: #00d4ff;
+  animation: pulseRing 2s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0%, 100% {
+    r: 2;
+    opacity: 0.3;
+  }
+  50% {
+    r: 6;
+    opacity: 0;
+  }
+}
+
+.pulse-dot {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.order-count-label {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  fill: var(--gold-primary);
+  font-weight: 700;
+  text-shadow: 0 0 5px rgba(212, 175, 55, 0.8);
+}
+
+/* Legend */
+.map-legend {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+.legend-dot.high-activity {
+  background: #00d4ff;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
+}
+
+.legend-dot.medium-activity {
+  background: #D4AF37;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+}
+
+.legend-dot.low-activity {
+  background: #ff6b6b;
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Stats */
+.map-stats {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 15px;
+  border-top: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-value {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .map-container {
+    height: 200px;
+  }
+
+  .map-legend {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
