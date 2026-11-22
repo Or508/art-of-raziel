@@ -46,13 +46,18 @@ function phoneToString(phone) {
   return `${countryCode}${number}`.replace(/\s/g, '').slice(0, 32);
 }
 
+// Orders store the phone as one string (+972501234567). Country codes are 1 to 3
+// digits and a greedy match cuts the number in the wrong place, so known codes
+// for this shop's customers are matched first.
+const KNOWN_COUNTRY_CODES = ['+972', '+44', '+33', '+49', '+61', '+7', '+1'];
+
 function splitPhone(phone) {
   const raw = String(phone || '');
-  const match = raw.match(/^(\+\d{1,4})(.*)$/);
-  if (!match) {
-    return { countryCode: '', number: raw };
+  const known = KNOWN_COUNTRY_CODES.find((code) => raw.startsWith(code));
+  if (known) {
+    return { countryCode: known, number: raw.slice(known.length) };
   }
-  return { countryCode: match[1], number: match[2] };
+  return { countryCode: '', number: raw };
 }
 
 function toNumber(value) {

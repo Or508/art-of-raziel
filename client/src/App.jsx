@@ -3,8 +3,11 @@ import './App.css';
 import AuthModal from './components/AuthModal';
 import AdminLoginModal from './components/AdminLoginModal';
 import HeroSection from './components/HeroSection';
+import TrustStrip from './components/TrustStrip';
 import AboutSection from './components/AboutSection';
+import MeetingBand from './components/MeetingBand';
 import ProductCatalog from './components/ProductCatalog';
+import emblemImg from './assets/emblem.svg';
 import CheckoutPage from './components/CheckoutPage';
 import ThankYouPage from './components/ThankYouPage';
 import ContactModal from './components/ContactModal';
@@ -25,19 +28,34 @@ const LEGAL_ROUTES = {
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
 // --- Local Asset Imports (MUST use these, not external URLs) ---
-import quillImg from './assets/quill.png';
-import wingsImg from './assets/wings.png';
-import heImg from './assets/he.png';
-import crownImg from './assets/crown.png';
 import mezuzahLargeImg from './assets/mezuzah-large.png';
 import mezuzahMediumImg from './assets/mezuzah-medium.png';
 import sealOfSolomonImg from './assets/seal-of-solomon.png';
-import amuletDefaultImg from './assets/amulet-default.png';
+
+function catalogGroupFor(category, title, sourceCategory = '') {
+  const text = title || '';
+  const lower = text.toLowerCase();
+  const isSeal = sourceCategory === 'חותמים'
+    || text.includes('חותם')
+    || text.includes('שלמה')
+    || lower.includes('seal')
+    || lower.includes('solomon');
+  if (category === 'mezuzah') return 'mezuzah';
+  if (isSeal) return 'seal';
+  if (category === 'amulet') return 'amulet';
+  return 'other';
+}
+
+function isSealOfSolomonTitle(title) {
+  const text = title || '';
+  return text.includes('שלמה') || text.toLowerCase().includes('solomon');
+}
 
 function App() {
   const [products, setProducts] = useState([]);
-  const [showCatalog, setShowCatalog] = useState(true);
   const [language, setLanguage] = useState('he'); // 'he' for Hebrew, 'en' for English
+  const [catalogFilter, setCatalogFilter] = useState('all');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setCart] = useState([]); // Shopping cart: array of { product, quantity }
   const [showCart, setShowCart] = useState(false); // Toggle cart visibility
   const [cartNotification, setCartNotification] = useState(false); // Show notification when item added
@@ -52,7 +70,6 @@ function App() {
   const [showDashboard, setShowDashboard] = useState(false); // Show admin dashboard
   const [showCheckout, setShowCheckout] = useState(false); // Show checkout page
   const [completedOrder, setCompletedOrder] = useState(null); // Completed order for thank you page
-  const [showProductsDropdown, setShowProductsDropdown] = useState(false); // Control Products dropdown
   const [showContactModal, setShowContactModal] = useState(false); // Contact / booking modal
   const [legalKey, setLegalKey] = useState(() => LEGAL_ROUTES[window.location.hash] || null);
   const [catalogError, setCatalogError] = useState(false);
@@ -88,10 +105,10 @@ function App() {
   // Unified handler to return to main home view from any page (dashboard / checkout / thank you)
   const handleGoHome = () => {
     clearLegalRoute();
+    setMenuOpen(false);
     setShowDashboard(false);
     setShowCheckout(false);
     setCompletedOrder(null);
-    setShowCatalog(false);
     setShowCart(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -108,14 +125,30 @@ function App() {
   };
 
   // Unified handler to open products/catalog from anywhere (dashboard / checkout / thank you / home)
-  const handleGoProducts = (sectionId = 'products') => {
+  const handleGoCatalog = (filter = 'all') => {
     clearLegalRoute();
+    setMenuOpen(false);
     setShowDashboard(false);
     setShowCheckout(false);
     setCompletedOrder(null);
     setShowCart(false);
-    setShowCatalog(true);
-    scrollToSection(sectionId);
+    setCatalogFilter(filter);
+    scrollToSection('products');
+  };
+
+  const handleGoAbout = () => {
+    clearLegalRoute();
+    setMenuOpen(false);
+    setShowDashboard(false);
+    setShowCheckout(false);
+    setCompletedOrder(null);
+    setShowCart(false);
+    scrollToSection('about');
+  };
+
+  const openContact = () => {
+    setMenuOpen(false);
+    setShowContactModal(true);
   };
 
   // Mock data with categories - Ready for SQL database
@@ -272,24 +305,13 @@ function App() {
   const mockProducts = useMemo(() => {
     return baseMockProducts.map(product => {
       // Add default image for amulets without image
-      let image = product.image;
-      if (!image && product.category === 'amulet') {
-        // Check if it's seal of solomon
-        const title = product.nameHe || product.nameEn || '';
-        const isSealOfSolomon = title.includes('חותם') || 
-                               title.includes('שלמה') ||
-                               title.toLowerCase().includes('seal') ||
-                               title.toLowerCase().includes('solomon');
-        if (isSealOfSolomon) {
-          image = sealOfSolomonImg;
-        } else {
-          image = amuletDefaultImg;
-        }
-      }
-      
+      const title = product.nameHe || product.nameEn || '';
+      const image = product.image || (isSealOfSolomonTitle(title) ? sealOfSolomonImg : null);
+
       return {
         ...product,
-        image: image,
+        image,
+        catalogGroup: catalogGroupFor(product.category, title),
         name: language === 'he' ? product.nameHe : product.nameEn,
         description: language === 'he' ? product.descriptionHe : product.descriptionEn,
         stock: typeof product.stock === 'number' ? product.stock : 0,
@@ -324,27 +346,14 @@ function App() {
         title.includes('בינוני') || 
         title.toLowerCase().includes('medium')
       );
-      const isSealOfSolomon = (category === 'amulet' && dbProduct.category === 'חותמים') || 
-                              title.includes('חותם') || 
-                              title.includes('שלמה') ||
-                              title.toLowerCase().includes('seal') ||
-                              title.toLowerCase().includes('solomon');
-      
       let image = dbProduct.image_url || null;
       if (!image) {
-        if (category === 'mezuzah') {
-          if (isLargeMezuzah) {
-            image = mezuzahLargeImg;
-          } else if (isMediumMezuzah) {
-            image = mezuzahMediumImg;
-          }
-        } else if (category === 'amulet') {
-          if (isSealOfSolomon) {
-            image = sealOfSolomonImg;
-          } else {
-            // Default image for all other amulets
-            image = amuletDefaultImg;
-          }
+        if (isLargeMezuzah) {
+          image = mezuzahLargeImg;
+        } else if (isMediumMezuzah) {
+          image = mezuzahMediumImg;
+        } else if (isSealOfSolomonTitle(title)) {
+          image = sealOfSolomonImg;
         }
       }
       
@@ -358,6 +367,7 @@ function App() {
         price: dbProduct.price_usd || dbProduct.price || 0,
         priceDisplay: `$${dbProduct.price_usd || dbProduct.price || 0}`,
         category: category,
+        catalogGroup: catalogGroupFor(category, title, dbProduct.category),
         image: image,
         stock: typeof dbProduct.stock === 'number' ? dbProduct.stock : 0,
         allow_preorder: !!dbProduct.allow_preorder
@@ -636,156 +646,148 @@ function App() {
       lang={language === 'he' ? 'he' : 'en'}
     >
       
-      {/* --- Floating Parallax Background Elements --- */}
-      <img src={heImg} className="floating-asset he-float" alt="Sacred Letter He" />
-      <img src={crownImg} className="floating-asset crown-float" alt="Tech Crown" />
-
-      {/* --- Navbar (Sticky & Glassmorphic) --- */}
-      <nav className="navbar">
-        <div className="nav-brand-container">
-          <img src={quillImg} className="nav-logo" alt="Art of Raziel Logo" />
-          <span className="nav-brand">ART OF RAZIEL</span>
-        </div>
-        <div className="nav-links">
-          <a 
-            href="#home" 
-            onClick={(e) => {
-              e.preventDefault();
+      <header className="site-header">
+        <div className="site-header-inner">
+          <a
+            className="brand"
+            href="#home"
+            onClick={(event) => {
+              event.preventDefault();
               handleGoHome();
             }}
           >
-            Home
+            <img src={emblemImg} alt="" />
+            <span className="brand-name">ART OF RAZIEL</span>
           </a>
-          <div 
-            className="dropdown"
-            onMouseEnter={() => setShowProductsDropdown(true)}
-            onMouseLeave={() => {
-              // Add delay before closing
-              setTimeout(() => {
-                setShowProductsDropdown(false);
-              }, 300);
-            }}
-          >
-            <a 
-              href="#products"
-              onClick={(e) => {
-                e.preventDefault();
-                handleGoProducts('products');
+
+          <nav className="nav-links" aria-label={language === 'he' ? 'ניווט' : 'Primary'}>
+            <button type="button" className="nav-link" onClick={() => handleGoCatalog('all')}>
+              {language === 'he' ? 'הקטלוג' : 'Catalog'}
+            </button>
+            <button type="button" className="nav-link" onClick={() => handleGoCatalog('mezuzah')}>
+              {language === 'he' ? 'מזוזות' : 'Mezuzahs'}
+            </button>
+            <button type="button" className="nav-link" onClick={() => handleGoCatalog('amulet-seal')}>
+              {language === 'he' ? 'קמיעות וחותמות' : 'Amulets & Seals'}
+            </button>
+            <button type="button" className="nav-link" onClick={handleGoAbout}>
+              {language === 'he' ? 'על רזיאל' : 'About Raziel'}
+            </button>
+          </nav>
+
+          <div className="nav-tools">
+            <button type="button" className="pill pill-outline nav-meeting" onClick={openContact}>
+              {language === 'he' ? 'קביעת פגישה' : 'Book a meeting'}
+            </button>
+            <button
+              type="button"
+              className="icon-btn lang-toggle"
+              onClick={() => setLanguage(language === 'he' ? 'en' : 'he')}
+              title={language === 'he' ? 'Switch to English' : 'עבור לעברית'}
+            >
+              {language === 'he' ? 'EN' : 'עב'}
+            </button>
+            {user ? (
+              <button type="button" className="account-link" onClick={handleLogout}>
+                {language === 'he' ? 'התנתקות' : 'Sign out'}
+              </button>
+            ) : (
+              <button type="button" className="account-link" onClick={() => { setMenuOpen(false); setShowAuthModal(true); }}>
+                {language === 'he' ? 'התחברות' : 'Sign in'}
+              </button>
+            )}
+            {admin && (
+              <div className="admin-tools">
+                <button type="button" className="account-link" onClick={() => { setMenuOpen(false); setShowDashboard(true); }}>
+                  {language === 'he' ? 'לוח בקרה' : 'Dashboard'}
+                </button>
+                <button type="button" className="account-link" onClick={handleAdminLogout}>
+                  {language === 'he' ? 'התנתק' : 'Sign out'}
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={language === 'he' ? 'סל קניות' : 'Shopping cart'}
+              onClick={() => {
+                setMenuOpen(false);
+                setShowCart((open) => !open);
               }}
             >
-              Products
-            </a>
-            <div 
-              className={`dropdown-content ${showProductsDropdown ? 'dropdown-open' : ''}`}
-              onMouseEnter={() => setShowProductsDropdown(true)}
-              onMouseLeave={() => {
-                setTimeout(() => {
-                  setShowProductsDropdown(false);
-                }, 300);
-              }}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 7h15l-1.6 9H8z" />
+                <path d="M6 7L5 4H2" />
+                <circle cx="9" cy="20" r="1.2" fill="currentColor" stroke="none" />
+                <circle cx="18" cy="20" r="1.2" fill="currentColor" stroke="none" />
+              </svg>
+              {cartItemCount > 0 && <span className="cart-count">{cartItemCount}</span>}
+            </button>
+            <button
+              type="button"
+              className="icon-btn nav-burger"
+              aria-expanded={menuOpen}
+              aria-label={language === 'he' ? 'תפריט' : 'Menu'}
+              onClick={() => setMenuOpen((open) => !open)}
             >
-              <a 
-                href="#products"
-                className="dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleGoProducts('products');
-                }}
-              >
-                All Products (כל המוצרים)
-              </a>
-              <a 
-                href="#mezuzahs"
-                className="dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleGoProducts('mezuzahs');
-                }}
-              >
-                Mezuzahs (מזוזות)
-              </a>
-              <a 
-                href="#amulets"
-                className="dropdown-item"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleGoProducts('amulets');
-                }}
-              >
-                Amulets (קמיעות)
-              </a>
-            </div>
+              {menuOpen ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
-        <div className="nav-right">
+
+        <div className={`nav-panel ${menuOpen ? 'open' : ''}`}>
+          <button type="button" className="nav-link" onClick={() => handleGoCatalog('all')}>
+            {language === 'he' ? 'הקטלוג' : 'Catalog'}
+          </button>
+          <button type="button" className="nav-link" onClick={() => handleGoCatalog('mezuzah')}>
+            {language === 'he' ? 'מזוזות' : 'Mezuzahs'}
+          </button>
+          <button type="button" className="nav-link" onClick={() => handleGoCatalog('amulet-seal')}>
+            {language === 'he' ? 'קמיעות וחותמות' : 'Amulets & Seals'}
+          </button>
+          <button type="button" className="nav-link" onClick={handleGoAbout}>
+            {language === 'he' ? 'על רזיאל' : 'About Raziel'}
+          </button>
+          <button type="button" className="pill pill-outline" onClick={openContact}>
+            {language === 'he' ? 'קביעת פגישה' : 'Book a meeting'}
+          </button>
           <button
-            className="contact-btn"
-            onClick={() => setShowContactModal(true)}
-            title={language === 'he' ? 'קבע פגישה / צור קשר' : 'Book a meeting / Contact'}
-          >
-            <span className="contact-icon">📅</span>
-            <span className="contact-text">
-              {language === 'he' ? 'יצירת קשר' : 'Contact'}
-            </span>
-          </button>
-          <button 
-            className={`cart-toggle ${cartItemCount > 0 ? 'cart-has-items' : ''} ${cartNotification ? 'cart-pulse' : ''}`}
-            onClick={() => setShowCart(!showCart)}
-            title={language === 'he' ? 'סל קניות' : 'Shopping Cart'}
-          >
-            <span className="cart-icon">🛒</span>
-            <span className="cart-text">{language === 'he' ? 'סל' : 'Cart'}</span>
-            {cartItemCount > 0 && <span className="cart-badge">{cartItemCount}</span>}
-          </button>
-          <button 
-            className="language-toggle"
+            type="button"
+            className="icon-btn lang-toggle"
             onClick={() => setLanguage(language === 'he' ? 'en' : 'he')}
-            title={language === 'he' ? 'Switch to English' : 'עבור לעברית'}
           >
             {language === 'he' ? 'EN' : 'עב'}
           </button>
-          {admin ? (
-            <div className="admin-info">
-              <button 
-                className="admin-dashboard-btn"
-                onClick={() => setShowDashboard(true)}
-                title={language === 'he' ? 'לוח בקרה' : 'Dashboard'}
-              >
+          {user ? (
+            <button type="button" className="account-link" onClick={handleLogout}>
+              {language === 'he' ? 'התנתקות' : 'Sign out'}
+            </button>
+          ) : (
+            <button type="button" className="account-link" onClick={() => { setMenuOpen(false); setShowAuthModal(true); }}>
+              {language === 'he' ? 'התחברות' : 'Sign in'}
+            </button>
+          )}
+          {admin && (
+            <div className="admin-tools">
+              <button type="button" className="account-link" onClick={() => { setMenuOpen(false); setShowDashboard(true); }}>
                 {language === 'he' ? 'לוח בקרה' : 'Dashboard'}
               </button>
-              <span className="admin-name">{admin.name || admin.email}</span>
-              <button className="admin-logout-btn" onClick={handleAdminLogout}>
-                {language === 'he' ? 'התנתק' : 'Logout'}
+              <button type="button" className="account-link" onClick={handleAdminLogout}>
+                {language === 'he' ? 'התנתק' : 'Sign out'}
               </button>
             </div>
-          ) : (
-            <button 
-              className="admin-btn"
-              onClick={() => setShowAdminModal(true)}
-            >
-              {language === 'he' ? 'התחברות אדמין' : 'ADMIN LOGIN'}
-            </button>
-          )}
-          
-          {user ? (
-            <div className="user-info">
-              <span className="user-name">
-                {user.first_name || user.email}
-              </span>
-              <button className="user-logout-btn" onClick={handleLogout}>
-                {language === 'he' ? 'התנתק' : 'Logout'}
-              </button>
-            </div>
-          ) : (
-            <button 
-              className="auth-btn"
-              onClick={() => setShowAuthModal(true)}
-            >
-              {language === 'he' ? 'התחבר/הירשם' : 'Login/Register'}
-            </button>
           )}
         </div>
-      </nav>
+      </header>
+
 
       {/* Admin Dashboard */}
       {showDashboard && admin ? (
@@ -812,7 +814,7 @@ function App() {
           />
         </Suspense>
       ) : (
-        <>
+        <div className="storefront">
           {legalKey && (
             <LegalPage
               pageKey={legalKey}
@@ -827,7 +829,7 @@ function App() {
               onBackToShop={() => {
                 setCompletedOrder(null);
                 setShowCheckout(false);
-                setShowCatalog(true);
+                setCatalogFilter('all');
               }}
             />
           )}
@@ -849,15 +851,14 @@ function App() {
           )}
           {!legalKey && !completedOrder && !showCheckout && (
               <>
-                {/* Hero Section */}
-                <HeroSection quillImg={quillImg} wingsImg={wingsImg} language={language} />
-
-                {/* About Section */}
-                <AboutSection language={language} />
-
-                {/* Product Catalog */}
+                <HeroSection
+                  language={language}
+                  onViewCatalog={() => handleGoCatalog('all')}
+                  onBookMeeting={openContact}
+                />
+                <TrustStrip language={language} />
                 {catalogError ? (
-                  <section className="catalog-status" dir={language === 'he' ? 'rtl' : 'ltr'}>
+                  <section className="catalog-status">
                     <p>
                       {language === 'he'
                         ? 'לא הצלחנו לטעון את הקטלוג. נסו שוב.'
@@ -865,19 +866,25 @@ function App() {
                     </p>
                     <button
                       type="button"
-                      className="catalog-retry-btn"
+                      className="pill pill-fill"
                       onClick={() => setCatalogAttempt((attempt) => attempt + 1)}
                     >
                       {language === 'he' ? 'נסו שוב' : 'Try again'}
                     </button>
                   </section>
-                ) : showCatalog && (
+                ) : (
                   <ProductCatalog
                     products={products}
                     language={language}
                     addToCart={addToCart}
+                    filter={catalogFilter}
+                    onFilterChange={setCatalogFilter}
                   />
                 )}
+                <AboutSection language={language} />
+                <MeetingBand language={language} onBookMeeting={openContact} />
+              </>
+          )}
 
       {/* Shopping Cart Sidebar */}
       {showCart && (
@@ -904,7 +911,7 @@ function App() {
                         <img src={imageSrc} alt={productName} className="cart-item-image" />
                       ) : (
                         <div className="cart-item-image-placeholder">
-                          <span>{language === 'he' ? 'אמנות קדושה' : 'Sacred Art'}</span>
+                          <img src={emblemImg} alt="" />
                         </div>
                       )}
                       <div className="cart-item-details">
@@ -971,6 +978,7 @@ function App() {
                   <button 
                     className="cart-checkout-btn"
                     onClick={() => {
+                      setMenuOpen(false);
                       setShowCart(false);
                       setShowCheckout(true);
                     }}
@@ -1057,10 +1065,8 @@ function App() {
       
       {/* Global WhatsApp floating button */}
       <WhatsAppButton />
-              </>
-          )}
-          <SiteFooter language={language} />
-        </>
+          <SiteFooter language={language} onAdmin={() => setShowAdminModal(true)} />
+        </div>
       )}
     </div>
   );

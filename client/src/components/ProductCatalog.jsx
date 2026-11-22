@@ -1,190 +1,175 @@
 import React, { useMemo } from 'react';
+import emblem from '../assets/emblem.svg';
 import { formatStorePrice } from '../utils/price';
 
-const ProductCatalog = ({ products, language, addToCart }) => {
-  // Filter products by category
-  const getUniqueProducts = (productList) => {
+const CHIPS = [
+  { id: 'all', he: 'הכל', en: 'All' },
+  { id: 'mezuzah', he: 'מזוזות', en: 'Mezuzahs' },
+  { id: 'amulet', he: 'קמיעות', en: 'Amulets' },
+  { id: 'seal', he: 'חותמות', en: 'Seals' },
+];
+
+const GROUP_LABEL = {
+  mezuzah: { he: 'מזוזה', en: 'Mezuzah' },
+  amulet: { he: 'קמיע', en: 'Amulet' },
+  seal: { he: 'חותם', en: 'Seal' },
+};
+
+function productKey(product) {
+  return product._id || product.id || `${product.name || product.nameHe || product.nameEn}_${product.price}`;
+}
+
+const ProductCatalog = ({ products, language, addToCart, filter, onFilterChange }) => {
+  const he = language === 'he';
+
+  const uniqueProducts = useMemo(() => {
     const seen = new Set();
-    return productList.filter(p => {
-      const id = p._id || p.id || `${p.name || p.nameHe || p.nameEn}_${p.price}`;
-      if (seen.has(id)) {
-        return false;
-      }
+    return products.filter((product) => {
+      const id = productKey(product);
+      if (seen.has(id)) return false;
       seen.add(id);
       return true;
     });
+  }, [products]);
+
+  const shown = useMemo(() => {
+    if (filter === 'all') return uniqueProducts;
+    if (filter === 'amulet-seal') {
+      return uniqueProducts.filter((product) => product.catalogGroup === 'amulet' || product.catalogGroup === 'seal');
+    }
+    return uniqueProducts.filter((product) => product.catalogGroup === filter);
+  }, [uniqueProducts, filter]);
+
+  const chipPressed = (id) => {
+    if (filter === 'amulet-seal') return id === 'amulet' || id === 'seal';
+    return filter === id;
   };
 
-  const allMezuzahs = useMemo(() => {
-    return getUniqueProducts(products.filter(p => p.category === 'mezuzah'));
-  }, [products]);
-
-  const allAmulets = useMemo(() => {
-    return getUniqueProducts(products.filter(p => p.category === 'amulet'));
-  }, [products]);
-
-  const otherProducts = useMemo(() => {
-    return getUniqueProducts(products.filter(p => p.category !== 'mezuzah' && p.category !== 'amulet'));
-  }, [products]);
-
-  const ProductCard = ({ product }) => {
-    const imageSrc = product.image || product.image_url || null;
-    const stockKnown = Number.isFinite(Number(product.stock));
-    const stock = stockKnown ? Number(product.stock) : Infinity;
-    const allowPreorder = !!product.allow_preorder;
-    const isLowStock = stock > 0 && stock <= 5;
-    const stockBadge = !stockKnown
-      ? null
-      : stock > 5
-        ? {
-            className: 'stock-badge stock-badge-available',
-            text: language === 'he' ? 'במלאי' : 'Available',
-          }
-        : isLowStock
-          ? {
-              className: 'stock-badge stock-badge-low',
-              text: language === 'he'
-                ? `נשארו רק ${stock} יחידות במלאי!`
-                : `Only ${stock} items left in stock!`,
-            }
-          : allowPreorder
-            ? {
-                className: 'stock-badge stock-badge-preorder',
-                text: language === 'he'
-                  ? 'הזמנה מוקדמת - ייצור בעבודת יד'
-                  : 'Pre-order - Handcrafted on demand',
-              }
-            : {
-                className: 'stock-badge stock-badge-out',
-                text: language === 'he'
-                  ? 'אזל זמנית מהמלאי - ניתן לפנות בוואטסאפ לבירור'
-                  : 'Temporarily Out of Stock - Contact on WhatsApp for availability',
-              };
-    
-    const handleAddToCart = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      addToCart(product);
-    };
-    
-    const isInStock = stock > 0;
-    const canPreorder = !isInStock && allowPreorder;
-    const isUnavailable = !isInStock && !allowPreorder;
-    
-    return (
-      <div className="product-card" dir={language === 'he' ? 'rtl' : 'ltr'}>
-        {imageSrc ? (
-          <img src={imageSrc} alt={product.name} />
-        ) : (
-          <div style={{
-            width: '100%',
-            height: '200px',
-            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%)',
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '20px',
-            border: '1px solid rgba(212, 175, 55, 0.2)'
-          }}>
-            <span style={{ color: 'rgba(212, 175, 55, 0.5)', fontFamily: 'Cinzel' }}>
-              {language === 'he' ? 'אמנות קדושה' : 'Sacred Art'}
-            </span>
-          </div>
-        )}
-        <h3 className="product-name">{product.name}</h3>
-        <p className="product-description">{product.description}</p>
-        <div className="product-price">
-          {formatStorePrice(product.price, language)}
+  return (
+    <section className="catalog" id="products">
+      <div className="catalog-heading">
+        <div>
+          <p className="eyebrow">THE COLLECTION</p>
+          <h2>{he ? 'הקטלוג' : 'The Collection'}</h2>
         </div>
-        {stockKnown && (
-          <div className={stockBadge.className} role="status">
-            {stockBadge.text}
-          </div>
+        <div className="catalog-chips" role="group" aria-label={he ? 'סינון לפי סוג' : 'Filter by type'}>
+          {CHIPS.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              className={`chip ${chipPressed(chip.id) ? 'chip-selected' : ''}`}
+              aria-pressed={chipPressed(chip.id)}
+              onClick={() => onFilterChange(chip.id)}
+            >
+              {he ? chip.he : chip.en}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="product-grid">
+        {shown.map((product) => (
+          <ProductCard key={productKey(product)} product={product} language={language} addToCart={addToCart} />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const ProductCard = ({ product, language, addToCart }) => {
+  const he = language === 'he';
+  const imageSrc = product.image || product.image_url || null;
+  const stockKnown = Number.isFinite(Number(product.stock));
+  const stock = stockKnown ? Number(product.stock) : Infinity;
+  const allowPreorder = !!product.allow_preorder;
+  const isLowStock = stock > 0 && stock <= 5;
+  const stockBadge = !stockKnown
+    ? null
+    : stock > 5
+      ? {
+          className: 'stock-badge stock-available',
+          text: he ? 'במלאי' : 'Available',
+        }
+      : isLowStock
+        ? {
+            className: 'stock-badge stock-low',
+            text: he ? `נשארו רק ${stock} יחידות במלאי!` : `Only ${stock} items left in stock!`,
+          }
+        : allowPreorder
+          ? {
+              className: 'stock-badge stock-preorder',
+              text: he ? 'הזמנה מוקדמת - ייצור בעבודת יד' : 'Pre-order - Handcrafted on demand',
+            }
+          : {
+              className: 'stock-badge stock-out',
+              text: he
+                ? 'אזל זמנית מהמלאי - ניתן לפנות בוואטסאפ לבירור'
+                : 'Temporarily Out of Stock - Contact on WhatsApp for availability',
+            };
+
+  const isInStock = stock > 0;
+  const canPreorder = !isInStock && allowPreorder;
+  const isUnavailable = !isInStock && !allowPreorder;
+  const group = GROUP_LABEL[product.catalogGroup];
+
+  const handleAddToCart = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    addToCart(product);
+  };
+
+  return (
+    <article className="product-card">
+      <div className="product-media">
+        {imageSrc ? (
+          <img src={imageSrc} alt={product.name || ''} />
+        ) : (
+          <img className="product-emblem" src={emblem} alt="" />
         )}
-        <button 
-          className={`order-btn ${isUnavailable ? 'order-btn-disabled' : canPreorder ? 'order-btn-preorder' : ''}`} 
+      </div>
+      <div className="product-body">
+        {group && <p className="product-kicker">{he ? group.he : group.en}</p>}
+        <h3 className="product-name">{product.name}</h3>
+        {product.description ? <p className="product-description">{product.description}</p> : null}
+        <div className="product-meta">
+          <p className="product-price">{formatStorePrice(product.price, language)}</p>
+          {stockBadge && (
+            <p className={stockBadge.className} role="status">{stockBadge.text}</p>
+          )}
+        </div>
+        <button
+          className="pill pill-outline product-add"
           onClick={isUnavailable ? undefined : handleAddToCart}
           type="button"
           disabled={isUnavailable}
           aria-label={
-            language === 'he'
+            he
               ? isInStock
-                ? 'הוסף לסל'
+                ? 'הוספה לסל'
                 : canPreorder
                   ? 'הזמנה עתידית'
                   : 'כרגע המוצר לא זמין'
               : isInStock
-                ? 'Add to Cart'
+                ? 'Add to cart'
                 : canPreorder
                   ? 'Future Order'
                   : 'Currently Unavailable'
           }
         >
-          {language === 'he'
+          {he
             ? isInStock
-              ? 'הוסף לסל'
+              ? 'הוספה לסל'
               : canPreorder
                 ? 'הזמנה עתידית'
                 : 'כרגע המוצר לא זמין'
             : isInStock
-              ? 'Add to Cart'
+              ? 'Add to cart'
               : canPreorder
                 ? 'Future Order'
                 : 'Currently Unavailable'}
         </button>
       </div>
-    );
-  };
-
-  return (
-    <div className="catalog-container" id="products">
-      <h2 className="section-title">
-        {language === 'he' ? 'הקטלוג המלא' : 'Full Catalog'}
-      </h2>
-
-      {/* Mezuzahs Section */}
-      {allMezuzahs.length > 0 && (
-        <div className="category-section" id="mezuzahs">
-          <h3 className="category-header">
-            {language === 'he' ? 'מזוזות' : 'Mezuzahs'}
-          </h3>
-          <div className="product-row">
-            {allMezuzahs.map((product) => (
-              <ProductCard key={product._id || product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Amulets Section */}
-      {allAmulets.length > 0 && (
-        <div className="category-section" id="amulets">
-          <h3 className="category-header">
-            {language === 'he' ? 'קמיעות' : 'Amulets'}
-          </h3>
-          <div className="product-row">
-            {allAmulets.map((product) => (
-              <ProductCard key={product._id || product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Other Products Section */}
-      {otherProducts.length > 0 && (
-        <div className="category-section">
-          <h3 className="category-header">
-            {language === 'he' ? 'כל המוצרים' : 'All Collection'}
-          </h3>
-          <div className="product-row">
-            {otherProducts.map((product) => (
-              <ProductCard key={product._id || product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+    </article>
   );
 };
 

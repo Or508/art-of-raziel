@@ -12,12 +12,12 @@
   width: 90%;
   max-width: 900px;
   max-height: 90vh;
-  background: rgba(10, 10, 10, 0.92);
-  border-radius: 16px;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  box-shadow:
-    0 0 30px rgba(0, 0, 0, 0.8),
-    0 0 40px rgba(212, 175, 55, 0.25);
+  background: var(--surface);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  box-shadow: none;
+  color: var(--text);
+  font-family: var(--font-body);
   padding: 28px 32px 26px;
   position: relative;
   overflow-y: auto;
@@ -59,9 +59,9 @@
 }
 
 .contact-modal-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-body);
   font-size: 1.6rem;
-  color: var(--gold-primary);
+  color: var(--gold);
   margin: 0;
   letter-spacing: 1px;
 }
@@ -92,8 +92,8 @@
 }
 
 .contact-label {
-  font-family: 'Cinzel', serif;
-  color: var(--gold-primary);
+  font-family: var(--font-body);
+  color: var(--gold);
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -101,20 +101,20 @@
 
 .contact-form-column input,
 .contact-modal-form textarea {
-  background: rgba(10, 10, 10, 0.85);
-  border: 2px solid rgba(212, 175, 55, 0.2);
-  border-radius: 8px;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: 12px;
   padding: 10px 14px;
-  color: #ffffff;
-  font-family: 'Assistant', sans-serif;
-  font-size: 0.95rem;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
   outline: none;
-  transition: all 0.25s ease;
+  min-height: 44px;
 }
 
 .contact-form-column input:focus,
 .contact-modal-form textarea:focus {
-  border-color: var(--gold-primary);
+  border-color: var(--gold);
   box-shadow:
     0 0 18px rgba(212, 175, 55, 0.4),
     inset 0 0 10px rgba(212, 175, 55, 0.1);
@@ -161,7 +161,7 @@
 }
 
 .contact-radio-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-body);
   font-size: 0.95rem;
   color: #f5f5f5;
 }
@@ -172,7 +172,7 @@
 }
 
 .contact-radio-card.active {
-  border-color: var(--gold-primary);
+  border-color: var(--gold);
   box-shadow:
     0 0 18px rgba(212, 175, 55, 0.5),
     0 0 16px rgba(0, 212, 255, 0.35);
@@ -243,7 +243,7 @@
   padding: 10px 20px;
   border-radius: 999px;
   border: none;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-body);
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -262,9 +262,9 @@
 }
 
 .contact-primary-btn {
-  background: linear-gradient(135deg, #F9E498 0%, #D4AF37 50%, #996515 100%);
-  color: #020202;
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+  background: var(--gold);
+  color: var(--ground);
+  box-shadow: none;
 }
 
 .contact-primary-btn:hover:not(:disabled) {
@@ -328,7 +328,7 @@
 }
 
 .time-slot-btn:hover:not(:disabled) {
-  border-color: var(--gold-primary);
+  border-color: var(--gold);
   box-shadow: 0 0 18px rgba(212, 175, 55, 0.35);
   transform: translateY(-1px);
 }
@@ -340,7 +340,7 @@
 
 .time-slot-btn.active {
   background: radial-gradient(circle at top left, rgba(0, 212, 255, 0.22), rgba(212, 175, 55, 0.3));
-  border-color: var(--gold-primary);
+  border-color: var(--gold);
   box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
   color: #ffffff;
 }
@@ -408,13 +408,13 @@
 }
 
 .booking-week-arrow:hover:not(:disabled) {
-  border-color: var(--gold-primary);
+  border-color: var(--gold);
   box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
 }
 
 .booking-week-range {
-  font-family: 'Cinzel', serif;
-  color: var(--gold-primary);
+  font-family: var(--font-body);
+  color: var(--gold);
   font-weight: 700;
   letter-spacing: 0.5px;
   font-size: 0.95rem;
@@ -437,7 +437,7 @@
 }
 
 .booking-day-card:hover:not(:disabled) {
-  border-color: var(--gold-primary);
+  border-color: var(--gold);
   box-shadow: 0 0 18px rgba(212, 175, 55, 0.25);
   transform: translateY(-1px);
 }
@@ -448,7 +448,7 @@
 }
 
 .booking-day-card.selected {
-  border-color: var(--gold-primary);
+  border-color: var(--gold);
   background: radial-gradient(circle at top left, rgba(0, 212, 255, 0.18), rgba(212, 175, 55, 0.22));
   color: #ffffff;
 }
@@ -460,7 +460,7 @@
 }
 
 .booking-day-date {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-body);
   font-size: 1.15rem;
   margin-top: 6px;
 }
@@ -482,7 +482,7 @@
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-body);
   font-size: 0.95rem;
   color: #ffffff;
   background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
@@ -492,6 +492,30 @@
 
 .contact-direct-whatsapp-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 0 30px rgba(37, 211, 102, 0.35);
+  box-shadow: none;
+}
+
+.contact-modal-title {
+  font-family: var(--font-display);
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+.contact-modal-icon {
+  background: var(--ground);
+  box-shadow: none;
+  color: var(--gold);
+}
+
+.contact-direct-whatsapp-btn {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  box-shadow: none;
+}
+
+.contact-modal-container,
+.contact-modal-container * {
+  box-shadow: none;
 }
 

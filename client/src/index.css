@@ -1,12 +1,12 @@
 /* --- Base Reset & Typography --- */
 :root {
-  font-family: 'Assistant', 'Montserrat', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Heebo', system-ui, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #020202;
+  color: #EDE6D6;
+  background-color: #0C1E37;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -24,10 +24,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #020202;
-  color: rgba(255, 255, 255, 0.87);
-  font-family: 'Assistant', 'Montserrat', sans-serif;
-  font-weight: 300;
+  background-color: #0C1E37;
+  color: #EDE6D6;
+  font-family: 'Heebo', system-ui, Arial, sans-serif;
+  font-weight: 400;
+  overflow-x: hidden;
 }
 
 #root {
@@ -38,12 +39,12 @@ body {
 /* --- Hebrew Text Support (RTL) --- */
 [dir="rtl"] {
   direction: rtl;
-  text-align: right;
 }
 
 /* --- Smooth Scrolling --- */
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 /* --- Selection Styling --- */

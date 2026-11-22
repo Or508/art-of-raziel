@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" role="img" aria-label="Art of Raziel emblem">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F6DC8C"/>
+      <stop offset="0.5" stop-color="#D4A246"/>
+      <stop offset="1" stop-color="#F0CD70"/>
+    </linearGradient>
+    <linearGradient id="wingDeep" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#1557B8"/>
+      <stop offset="1" stop-color="#3FA4EE"/>
+    </linearGradient>
+    <linearGradient id="wingLight" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#2F86DB"/>
+      <stop offset="1" stop-color="#8FD3FF"/>
+    </linearGradient>
+    <path id="feather" d="M0,0 C30,-12 70,-4 100,14 C70,6 30,10 0,0 Z"/>
+    <g id="wing">
+      <!-- primaries: long feathers fanning up and out -->
+      <g fill="url(#wingDeep)">
+        <use href="#feather" transform="translate(262,138) rotate(-74) scale(1.18,1)"/>
+        <use href="#feather" transform="translate(264,142) rotate(-62) scale(1.2,1)"/>
+        <use href="#feather" transform="translate(266,147) rotate(-50) scale(1.16,1)"/>
+        <use href="#feather" transform="translate(267,152) rotate(-38) scale(1.08,1)"/>
+        <use href="#feather" transform="translate(267,158) rotate(-26) scale(0.96,1)"/>
+        <use href="#feather" transform="translate(266,164) rotate(-14) scale(0.82,1)"/>
+        <use href="#feather" transform="translate(264,170) rotate(-2) scale(0.66,1)"/>
+      </g>
+      <!-- coverts: shorter, lighter feathers over the base -->
+      <g fill="url(#wingLight)">
+        <use href="#feather" transform="translate(260,140) rotate(-66) scale(0.72,0.9)"/>
+        <use href="#feather" transform="translate(262,146) rotate(-52) scale(0.7,0.9)"/>
+        <use href="#feather" transform="translate(263,152) rotate(-38) scale(0.64,0.9)"/>
+        <use href="#feather" transform="translate(263,159) rotate(-24) scale(0.56,0.9)"/>
+        <use href="#feather" transform="translate(262,165) rotate(-10) scale(0.46,0.9)"/>
+      </g>
+    </g>
+  </defs>
+
+  <use href="#wing"/>
+  <use href="#wing" transform="translate(400,0) scale(-1,1)"/>
+
+  <!-- medallion -->
+  <circle cx="200" cy="140" r="66" fill="#0C1E37"/>
+  <circle cx="200" cy="140" r="64" fill="none" stroke="url(#gold)" stroke-width="7"/>
+  <circle cx="200" cy="140" r="54" fill="none" stroke="url(#gold)" stroke-width="1.6"/>
+  <!-- Star of David -->
+  <g fill="none" stroke="url(#gold)" stroke-width="5.5" stroke-linejoin="miter">
+    <polygon points="200,92 241.6,164 158.4,164"/>
+    <polygon points="200,188 241.6,116 158.4,116"/>
+  </g>
+</svg>

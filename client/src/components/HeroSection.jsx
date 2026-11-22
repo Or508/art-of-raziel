@@ -1,27 +1,34 @@
 import React from 'react';
+import emblem from '../assets/emblem.svg';
 
-const HeroSection = ({ quillImg, wingsImg, language }) => {
+const HeroSection = ({ language, onViewCatalog, onBookMeeting }) => {
+  const he = language === 'he';
+
   return (
-    <header className="hero-section" id="home">
-      {/* Floating Quill Above Title */}
-      <img src={quillImg} className="floating-quill-hero" alt="Floating Quill" />
-      
-      <div className="hero-content">
-        {/* Left Wing */}
-        <img src={wingsImg} className="wing-icon left" alt="Wing Symbol" />
-        
-        {/* Center Title */}
-        <div className="text-center">
-          <h1 className="main-title">ART OF RAZIEL</h1>
-          <p className="subtitle">
-            {language === 'he'
-              ? 'אמנות קדושה ויודאיקה בעבודת יד מאת האמן רזיאל'
-              : 'Sacred Art & Handcrafted Judaica by Master Artist Raziel'}
-          </p>
-        </div>
-        
-        {/* Right Wing */}
-        <img src={wingsImg} className="wing-icon right" alt="Wing Symbol" />
+    <header className="hero" id="home">
+      <img
+        className="hero-emblem"
+        src={emblem}
+        alt={
+          he
+            ? 'הסמל של Art of Raziel: מגן דוד בתוך מדליון זהב עם כנפיים'
+            : 'Art of Raziel emblem: a Star of David in a gold medallion with wings'
+        }
+      />
+      <p className="hero-wordmark">ART OF RAZIEL</p>
+      <h1>{he ? 'אמנות קודש בעבודת יד' : 'Sacred art, made by hand'}</h1>
+      <p className="hero-sub">
+        {he
+          ? 'מזוזות, קמעות וחותמות שנכתבים בטהרה, ומגיעים אליכם ישירות מהאמן רזיאל.'
+          : 'Mezuzahs, amulets, and seals written in purity, sent to you directly from the artist Raziel.'}
+      </p>
+      <div className="hero-actions">
+        <button type="button" className="pill pill-fill" onClick={onViewCatalog}>
+          {he ? 'לצפייה בקטלוג' : 'View the catalog'}
+        </button>
+        <button type="button" className="pill pill-outline" onClick={onBookMeeting}>
+          {he ? 'קביעת פגישה עם רזיאל' : 'Book a meeting with Raziel'}
+        </button>
       </div>
     </header>
   );
