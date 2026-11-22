@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Mail, Phone, MapPin, UserCircle2 } from 'lucide-react';
 import './ContactRequestsTable.css';
+import { apiUrl } from '../utils/api';
 
 const CustomersTable = ({ language }) => {
   const [customers, setCustomers] = useState([]);
@@ -11,7 +12,7 @@ const CustomersTable = ({ language }) => {
     const loadCustomers = async () => {
       try {
         const token = localStorage.getItem('adminToken');
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/customers`, {
+        const res = await fetch(apiUrl('/api/admin/customers'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },

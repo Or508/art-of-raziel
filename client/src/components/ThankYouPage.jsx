@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Package, Mail, MapPin } from 'lucide-react';
+import { buildOrderWhatsAppUrl } from '../utils/whatsapp';
+import { formatStorePrice } from '../utils/price';
 import './ThankYouPage.css';
 
 const ThankYouPage = ({ order, language, onBackToShop }) => {
@@ -16,6 +18,8 @@ const ThankYouPage = ({ order, language, onBackToShop }) => {
       </div>
     );
   }
+
+  const whatsappUrl = buildOrderWhatsAppUrl(order, language);
 
   return (
     <div className="thank-you-page" dir={language === 'he' ? 'rtl' : 'ltr'}>
@@ -103,18 +107,35 @@ const ThankYouPage = ({ order, language, onBackToShop }) => {
                   <span className="item-name">{item.title}</span>
                   <span className="item-quantity">× {item.quantity}</span>
                   <span className="item-price">
-                    {order.currency === 'ILS' ? '₪' : '$'}{item.total.toFixed(2)}
+                    {formatStorePrice(
+                      Number.isFinite(Number(item.total))
+                        ? Number(item.total)
+                        : (Number(item.price) || 0) * (Number(item.quantity) || 1),
+                      language
+                    )}
                   </span>
                 </motion.div>
               ))}
             </div>
             <div className="order-total">
               <span>{language === 'he' ? 'סה"כ' : 'Total'}</span>
-              <span>
-                {order.currency === 'ILS' ? '₪' : '$'}{order.totalAmount.toFixed(2)}
-              </span>
+              <span>{formatStorePrice(order.totalAmount, language)}</span>
             </div>
           </div>
+
+          <p className="whatsapp-order-note">
+            {language === 'he'
+              ? 'ההזמנה נשמרה. בוואטסאפ אפשר להסדיר תשלום ומשלוח מול רזיאל.'
+              : 'Your order is saved. Continue on WhatsApp to arrange payment and shipping with Raziel.'}
+          </p>
+          <a
+            className="whatsapp-order-btn"
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {language === 'he' ? 'המשך לוואטסאפ' : 'Continue on WhatsApp'}
+          </a>
 
           {/* Action Buttons */}
           <div className="thank-you-actions">

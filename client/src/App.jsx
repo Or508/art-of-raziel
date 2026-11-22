@@ -9,8 +9,17 @@ import CheckoutPage from './components/CheckoutPage';
 import ThankYouPage from './components/ThankYouPage';
 import ContactModal from './components/ContactModal';
 import WhatsAppButton from './components/WhatsAppButton';
+import LegalPage from './components/LegalPage';
+import SiteFooter from './components/SiteFooter';
 import { formatStorePrice } from './utils/price';
 import { availableStock, stockLimitMessage } from './utils/stock';
+import { apiUrl } from './utils/api';
+
+const LEGAL_ROUTES = {
+  '#privacy': 'privacy',
+  '#terms': 'terms',
+  '#accessibility': 'accessibility',
+};
 
 // Lazy load heavy components to reduce initial bundle size
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
@@ -45,9 +54,40 @@ function App() {
   const [completedOrder, setCompletedOrder] = useState(null); // Completed order for thank you page
   const [showProductsDropdown, setShowProductsDropdown] = useState(false); // Control Products dropdown
   const [showContactModal, setShowContactModal] = useState(false); // Contact / booking modal
+  const [legalKey, setLegalKey] = useState(() => LEGAL_ROUTES[window.location.hash] || null);
+  const [catalogError, setCatalogError] = useState(false);
+  const [catalogAttempt, setCatalogAttempt] = useState(0);
+
+  useEffect(() => {
+    const he = language === 'he';
+    document.documentElement.lang = he ? 'he' : 'en';
+    document.documentElement.dir = he ? 'rtl' : 'ltr';
+  }, [language]);
+
+  useEffect(() => {
+    const syncLegalRoute = () => {
+      setLegalKey(LEGAL_ROUTES[window.location.hash] || null);
+    };
+    window.addEventListener('hashchange', syncLegalRoute);
+    return () => window.removeEventListener('hashchange', syncLegalRoute);
+  }, []);
+
+  useEffect(() => {
+    if (legalKey) {
+      window.scrollTo({ top: 0 });
+    }
+  }, [legalKey]);
+
+  const clearLegalRoute = () => {
+    if (LEGAL_ROUTES[window.location.hash]) {
+      window.history.pushState(null, '', `${window.location.pathname}${window.location.search}`);
+    }
+    setLegalKey(null);
+  };
 
   // Unified handler to return to main home view from any page (dashboard / checkout / thank you)
   const handleGoHome = () => {
+    clearLegalRoute();
     setShowDashboard(false);
     setShowCheckout(false);
     setCompletedOrder(null);
@@ -69,6 +109,7 @@ function App() {
 
   // Unified handler to open products/catalog from anywhere (dashboard / checkout / thank you / home)
   const handleGoProducts = (sectionId = 'products') => {
+    clearLegalRoute();
     setShowDashboard(false);
     setShowCheckout(false);
     setCompletedOrder(null);
@@ -340,7 +381,7 @@ function App() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
+        const res = await fetch(apiUrl('/api/products'), {
           signal: controller.signal
         });
         
@@ -379,24 +420,35 @@ function App() {
           
           const uniqueProducts = removeDuplicates(data);
           console.log('✅ Unique products after deduplication:', uniqueProducts.length);
+          setCatalogError(false);
           setProducts(updateProductsForLanguage(uniqueProducts));
-        } else {
+        } else if (import.meta.env.DEV) {
           console.log('⚠️ No products from SQL, using mock data');
+          setCatalogError(false);
           setProducts(mockProducts);
+        } else {
+          setCatalogError(false);
+          setProducts([]);
         }
       } catch (err) {
         if (err.name === 'AbortError') {
-          console.error('❌ Request timeout - using mock data');
+          console.error('❌ Request timeout');
         } else {
           console.error("❌ Error fetching from SQL:", err);
         }
-        console.log("Using mock data as fallback");
-        setProducts(mockProducts);
+        if (import.meta.env.DEV) {
+          console.log("Using mock data as fallback");
+          setCatalogError(false);
+          setProducts(mockProducts);
+        } else {
+          setCatalogError(true);
+          setProducts([]);
+        }
       }
     };
 
     fetchProducts();
-  }, [language, mockProducts]);
+  }, [language, mockProducts, catalogAttempt]);
 
   // Removed - now handled in ProductCatalog component for better code splitting
 
@@ -578,7 +630,11 @@ function App() {
   }, [cart]);
 
   return (
-    <div className="app-container">
+    <div
+      className="app-container"
+      dir={language === 'he' ? 'rtl' : 'ltr'}
+      lang={language === 'he' ? 'he' : 'en'}
+    >
       
       {/* --- Floating Parallax Background Elements --- */}
       <img src={heImg} className="floating-asset he-float" alt="Sacred Letter He" />
@@ -755,32 +811,43 @@ function App() {
             products={products}
           />
         </Suspense>
-      ) : completedOrder ? (
-        /* Thank You Page */
-        <ThankYouPage 
-          order={completedOrder}
-          language={language}
-          onBackToShop={() => {
-            setCompletedOrder(null);
-            setShowCheckout(false);
-            setShowCatalog(true);
-          }}
-        />
-      ) : showCheckout ? (
-        /* Checkout Page */
-        <CheckoutPage
-          cart={cart}
-          language={language}
-          user={user}
-          stockAlerts={stockAlerts}
-          onUpdateQuantity={updateQuantity}
-          onOrderComplete={handleOrderComplete}
-          onBack={() => {
-            setShowCheckout(false);
-            setShowCart(true);
-          }}
-        />
       ) : (
+        <>
+          {legalKey && (
+            <LegalPage
+              pageKey={legalKey}
+              language={language}
+              onClose={clearLegalRoute}
+            />
+          )}
+          {!legalKey && completedOrder && (
+            <ThankYouPage
+              order={completedOrder}
+              language={language}
+              onBackToShop={() => {
+                setCompletedOrder(null);
+                setShowCheckout(false);
+                setShowCatalog(true);
+              }}
+            />
+          )}
+          {showCheckout && !completedOrder && (
+            <div hidden={Boolean(legalKey)}>
+              <CheckoutPage
+                cart={cart}
+                language={language}
+                user={user}
+                stockAlerts={stockAlerts}
+                onUpdateQuantity={updateQuantity}
+                onOrderComplete={handleOrderComplete}
+                onBack={() => {
+                  setShowCheckout(false);
+                  setShowCart(true);
+                }}
+              />
+            </div>
+          )}
+          {!legalKey && !completedOrder && !showCheckout && (
               <>
                 {/* Hero Section */}
                 <HeroSection quillImg={quillImg} wingsImg={wingsImg} language={language} />
@@ -789,10 +856,25 @@ function App() {
                 <AboutSection language={language} />
 
                 {/* Product Catalog */}
-                {showCatalog && (
-                  <ProductCatalog 
-                    products={products} 
-                    language={language} 
+                {catalogError ? (
+                  <section className="catalog-status" dir={language === 'he' ? 'rtl' : 'ltr'}>
+                    <p>
+                      {language === 'he'
+                        ? 'לא הצלחנו לטעון את הקטלוג. נסו שוב.'
+                        : "We couldn't load the catalog. Please try again."}
+                    </p>
+                    <button
+                      type="button"
+                      className="catalog-retry-btn"
+                      onClick={() => setCatalogAttempt((attempt) => attempt + 1)}
+                    >
+                      {language === 'he' ? 'נסו שוב' : 'Try again'}
+                    </button>
+                  </section>
+                ) : showCatalog && (
+                  <ProductCatalog
+                    products={products}
+                    language={language}
                     addToCart={addToCart}
                   />
                 )}
@@ -975,6 +1057,9 @@ function App() {
       
       {/* Global WhatsApp floating button */}
       <WhatsAppButton />
+              </>
+          )}
+          <SiteFooter language={language} />
         </>
       )}
     </div>

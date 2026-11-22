@@ -3,10 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "description": "Art of Raziel - Full Stack",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev"
+    "dev:client": "cd client && npm run dev",
+    "build": "npm ci --prefix server --omit=dev && npm ci --prefix client --include=dev && npm run build --prefix client",
+    "start": "node server/scripts/initDb.js && node server/app.js",
+    "db:init": "node server/scripts/initDb.js"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

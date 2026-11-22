@@ -1,10 +1,8 @@
 import React from 'react';
+import { getWhatsAppNumber } from '../utils/whatsapp';
 
 const WhatsAppButton = () => {
-  const number = import.meta.env.VITE_WHATSAPP_NUMBER;
-  if (!number) return null;
-
-  const url = `https://wa.me/${number}`;
+  const url = `https://wa.me/${getWhatsAppNumber()}`;
 
   return (
     <a

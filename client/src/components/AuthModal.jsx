@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './AuthModal.css';
+import { apiUrl } from '../utils/api';
 
 const AuthModal = ({ isOpen, onClose, onSuccess, language }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -28,7 +29,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, language }) => {
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      const response = await fetch(apiUrl(endpoint), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

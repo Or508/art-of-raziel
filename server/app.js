@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -11,7 +12,6 @@ const PORT = process.env.PORT || 5000;
 
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -21,20 +21,31 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-app.use(cors({
-    origin(origin, callback) {
-        // Requests without an Origin header (curl, same-server) are not browser CORS calls.
-        if (!origin || allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        const error = new Error('Origin is not allowed');
-        error.status = 403;
-        return callback(error);
-    },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+// Behind a host's proxy (Render, Railway), so rate limits see the real client IP
+// and req.protocol is https.
+app.set('trust proxy', 1);
+
+app.use(cors((req, callback) => {
+    const origin = req.get('origin');
+    // No Origin header (curl, same-server) is not a browser CORS call. The site's own
+    // address is always allowed, because in production Express serves the storefront too.
+    const sameSite = origin === `${req.protocol}://${req.get('host')}`;
+    if (!origin || sameSite || allowedOrigins.includes(origin)) {
+        return callback(null, {
+            origin: true,
+            methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+        });
+    }
+    const error = new Error('Origin is not allowed');
+    error.status = 403;
+    return callback(error);
 }));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
+
+app.get('/health', (req, res) => {
+    res.json({ ok: true });
+});
 
 const rateLimitResponse = {
     success: false,
@@ -82,14 +93,26 @@ app.use('/api/contact', (req, res, next) => {
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/payments', paymentRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
 
-app.get('/', (req, res) => {
-    res.send('<h1>Art of Raziel - השרת מחובר למוצרים! 🕯️</h1>');
+app.use('/api', (req, res) => {
+    res.status(404).json({ success: false, message: 'Not found' });
 });
+
+// Production: serve the built storefront from client/dist on the same address as the API.
+const clientDist = path.resolve(__dirname, '../client/dist');
+if (fs.existsSync(path.join(clientDist, 'index.html'))) {
+    app.use(express.static(clientDist, { index: false, maxAge: '1h' }));
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(clientDist, 'index.html'));
+    });
+} else {
+    app.get('/', (req, res) => {
+        res.send('Art of Raziel API is running. Build the storefront with npm run build.');
+    });
+}
 
 // Last middleware. Controllers that already sent a response never reach this.
 app.use((err, req, res, next) => {

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import './ContactModal.css';
+import { apiUrl } from '../utils/api';
 
 const ContactModal = ({ isOpen, onClose, user, language }) => {
   const [form, setForm] = React.useState({
@@ -173,9 +174,7 @@ const ContactModal = ({ isOpen, onClose, user, language }) => {
       setBookedSlotsDate('');
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/contact/booked-slots?date=${encodeURIComponent(
-            date
-          )}`
+          apiUrl(`/api/contact/booked-slots?date=${encodeURIComponent(date)}`)
         );
         const json = await res.json();
         if (!isActive) return;
@@ -257,7 +256,7 @@ const ContactModal = ({ isOpen, onClose, user, language }) => {
 
     try {
       // 1. Send request to backend API
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contact`, {
+      const response = await fetch(apiUrl('/api/contact'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -192,6 +192,32 @@
   border-top: 2px solid rgba(212, 175, 55, 0.3);
 }
 
+.whatsapp-order-note {
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.whatsapp-order-btn {
+  display: block;
+  margin: 0 auto 28px;
+  max-width: 520px;
+  padding: 16px 22px;
+  border-radius: 6px;
+  background: #128C7E;
+  color: #ffffff;
+  font-family: 'Assistant', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.whatsapp-order-btn:hover {
+  background: #0f7a6e;
+}
+
 /* Action Buttons */
 .thank-you-actions {
   display: flex;

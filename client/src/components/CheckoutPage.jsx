@@ -5,10 +5,11 @@ import * as yup from 'yup';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, CheckCircle2, CreditCard, MapPin, User } from 'lucide-react';
+import { Loader2, CheckCircle2, FileText, MapPin, User } from 'lucide-react';
 import './CheckoutPage.css';
 import { formatStorePrice, USD_TO_ILS } from '../utils/price';
 import { availableStock, stockLimitMessage } from '../utils/stock';
+import { apiUrl } from '../utils/api';
 
 // Country list with ZIP code patterns
 const COUNTRIES = [
@@ -66,26 +67,11 @@ const shippingSchema = yup.object({
     }),
 });
 
-// Validation schema for Step 3: Payment
-const paymentSchema = yup.object({
-  cardNumber: yup.string()
-    .required('Card number is required')
-    .matches(/^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$/, 'Card number must be 16 digits'),
-  expiryDate: yup.string()
-    .required('Expiry date is required')
-    .matches(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Format: MM/YY'),
-  cvv: yup.string()
-    .required('CVV is required')
-    .matches(/^\d{3,4}$/, 'CVV must be 3 or 4 digits'),
-  cardholderName: yup.string()
-    .required('Cardholder name is required')
-    .min(2, 'Name must be at least 2 characters'),
-});
-
 const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity, onOrderComplete, onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
+  const [orderError, setOrderError] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Normalize user phone to international format for react-phone-number-input
   const normalizeUserPhone = (rawPhone) => {
@@ -147,11 +133,6 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
     mode: 'onChange',
   });
 
-  const paymentForm = useForm({
-    resolver: yupResolver(paymentSchema),
-    mode: 'onChange',
-  });
-
   // If user logs in after the checkout page is already open,
   // gently prefill empty fields without overwriting what the customer already typed.
   useEffect(() => {
@@ -189,56 +170,30 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
 
   // Handle form submission
   const handleSubmit = async () => {
+    if (!agreedToTerms) {
+      setOrderError(language === 'he'
+        ? 'יש לאשר את התקנון ואת מדיניות הפרטיות.'
+        : 'Please agree to the Terms and Privacy Policy.');
+      return;
+    }
+
     const overStockItem = cart.find((item) => {
       const limit = availableStock(item.product);
       return limit !== null && item.quantity > limit;
     });
     if (overStockItem) {
       const limit = availableStock(overStockItem.product);
-      setPaymentError(stockLimitMessage(limit, language));
+      setOrderError(stockLimitMessage(limit, language));
       return;
     }
 
     setIsSubmitting(true);
-    setPaymentError('');
+    setOrderError('');
 
-    // Get all form data
     const identityData = identityForm.getValues();
     const shippingData = shippingForm.getValues();
 
-    // Convert total to base currency for the gateway (assume USD for now)
-    const totalInUsd = currency === 'ILS' ? Math.round(totalAmount) : totalAmount;
-
-    // 1) Create a mock token from card data (later: real token from Stripe/PayPal SDK)
-    const paymentToken = `tok_${Date.now()}`;
-
     try {
-      // 2) Call backend payments API
-      const paymentResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/charge`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: paymentToken,
-          amount: Math.round(totalInUsd * 100), // smallest unit (cents/agorot)
-          currency: 'USD',
-          orderId: `ORD-${Date.now()}`,
-          customer: {
-            fullName: identityData.fullName,
-            email: identityData.email,
-          },
-        }),
-      });
-
-      const paymentResult = await paymentResponse.json();
-
-      if (!paymentResponse.ok || !paymentResult.success) {
-        throw new Error(paymentResult.message || 'Payment failed');
-      }
-
-      const transactionId = paymentResult.data?.transactionId || `PAY-${Date.now()}`;
-
       const orderPayload = {
         customer: {
           fullName: identityData.fullName,
@@ -267,10 +222,9 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
         totalAmount: language === 'he' ? Math.round(totalAmount * USD_TO_ILS) : totalAmount,
         currency: currency,
         status: 'Pending',
-        paymentId: transactionId,
       };
 
-      const orderResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/orders`, {
+      const orderResponse = await fetch(apiUrl('/api/orders'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -292,38 +246,13 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
         onOrderComplete(orderResult.data.order);
       }
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Order error:', error);
       const fallback = language === 'he'
-        ? 'התשלום נכשל, נסה שוב או פנה לתמיכה.'
-        : 'Payment failed, please try again or contact support.';
-      setPaymentError(error.message && error.message !== 'Failed to fetch' ? error.message : fallback);
+        ? 'לא הצלחנו לשלוח את ההזמנה. נסו שוב.'
+        : "We couldn't send the order. Please try again.";
+      setOrderError(error.message && error.message !== 'Failed to fetch' ? error.message : fallback);
       setIsSubmitting(false);
     }
-  };
-
-  // Format card number with spaces
-  const formatCardNumber = (value) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
-    const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
-  };
-
-  // Format expiry date
-  const formatExpiryDate = (value) => {
-    const v = value.replace(/\D/g, '');
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
-    }
-    return v;
   };
 
   return (
@@ -335,7 +264,7 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
             ← {language === 'he' ? 'חזרה' : 'Back'}
           </button>
           <h1 className="checkout-title">
-            {language === 'he' ? 'תשלום' : 'Checkout'}
+            {language === 'he' ? 'הזמנה' : 'Checkout'}
           </h1>
         </div>
 
@@ -349,7 +278,7 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
               <div className="step-label">
                 {step === 1 && (language === 'he' ? 'פרטים' : 'Identity')}
                 {step === 2 && (language === 'he' ? 'משלוח' : 'Shipping')}
-                {step === 3 && (language === 'he' ? 'תשלום' : 'Payment')}
+                {step === 3 && (language === 'he' ? 'סיכום' : 'Review')}
               </div>
             </div>
           ))}
@@ -593,14 +522,14 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
                       className="checkout-btn-next"
                       onClick={() => handleNext(shippingForm, 3)}
                     >
-                      {language === 'he' ? 'המשך לתשלום' : 'Continue to Payment'} →
+                      {language === 'he' ? 'המשך לסיכום' : 'Continue to Review'} →
                     </button>
                   </div>
                 </form>
               </motion.div>
             )}
 
-            {/* Step 3: Payment */}
+            {/* Step 3: Review and send */}
             {currentStep === 3 && (
               <motion.div
                 key="step3"
@@ -610,110 +539,17 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
                 className="checkout-step"
               >
                 <div className="step-header">
-                  <CreditCard size={24} className="step-icon" />
-                  <h2>{language === 'he' ? 'פרטי תשלום' : 'Payment Information'}</h2>
+                  <FileText size={24} className="step-icon" />
+                  <h2>{language === 'he' ? 'שליחת הזמנה' : 'Send order request'}</h2>
                 </div>
 
-                <div className="payment-security">
-                  <div className="payment-shield" />
-                  <div className="payment-security-text">
-                    <span className="payment-security-title">
-                      {language === 'he' ? 'הגנת כרטיס משופרת' : 'Enhanced Card Protection'}
-                    </span>
-                    <span className="payment-security-subtitle">
-                      {language === 'he'
-                        ? 'הנתונים מוצפנים ואינם נשמרים בשרת – חיוב מתבצע דרך שרת מאובטח.'
-                        : 'Card data is encrypted and never stored – all charges are processed via a secure gateway.'}
-                    </span>
-                  </div>
-                </div>
-
-                <form className="checkout-form" onSubmit={paymentForm.handleSubmit(handleSubmit)}>
-                  <div className="form-group">
-                    <label htmlFor="cardholderName">
-                      {language === 'he' ? 'שם על הכרטיס' : 'Cardholder Name'} *
-                    </label>
-                    <input
-                      type="text"
-                      id="cardholderName"
-                      {...paymentForm.register('cardholderName')}
-                      className={paymentForm.formState.errors.cardholderName ? 'error' : ''}
-                      placeholder={language === 'he' ? 'שם מלא כפי שמופיע על הכרטיס' : 'Name as it appears on card'}
-                    />
-                    {paymentForm.formState.errors.cardholderName && (
-                      <span className="error-message">
-                        {paymentForm.formState.errors.cardholderName.message}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="cardNumber">
-                      {language === 'he' ? 'מספר כרטיס' : 'Card Number'} *
-                    </label>
-                    <input
-                      type="text"
-                      id="cardNumber"
-                      {...paymentForm.register('cardNumber')}
-                      className={paymentForm.formState.errors.cardNumber ? 'error' : ''}
-                      placeholder="1234 5678 9012 3456"
-                      maxLength="19"
-                      onChange={(e) => {
-                        const formatted = formatCardNumber(e.target.value);
-                        paymentForm.setValue('cardNumber', formatted);
-                      }}
-                    />
-                    {paymentForm.formState.errors.cardNumber && (
-                      <span className="error-message">
-                        {paymentForm.formState.errors.cardNumber.message}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="expiryDate">
-                        {language === 'he' ? 'תאריך תפוגה' : 'Expiry Date'} *
-                      </label>
-                      <input
-                        type="text"
-                        id="expiryDate"
-                        {...paymentForm.register('expiryDate')}
-                        className={paymentForm.formState.errors.expiryDate ? 'error' : ''}
-                        placeholder="MM/YY"
-                        maxLength="5"
-                        onChange={(e) => {
-                          const formatted = formatExpiryDate(e.target.value);
-                          paymentForm.setValue('expiryDate', formatted);
-                        }}
-                      />
-                      {paymentForm.formState.errors.expiryDate && (
-                        <span className="error-message">
-                          {paymentForm.formState.errors.expiryDate.message}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="cvv">
-                        CVV *
-                      </label>
-                      <input
-                        type="text"
-                        id="cvv"
-                        {...paymentForm.register('cvv')}
-                        className={paymentForm.formState.errors.cvv ? 'error' : ''}
-                        placeholder="123"
-                        maxLength="4"
-                      />
-                      {paymentForm.formState.errors.cvv && (
-                        <span className="error-message">
-                          {paymentForm.formState.errors.cvv.message}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
+                <form
+                  className="checkout-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    handleSubmit();
+                  }}
+                >
                   {/* Order Summary */}
                   <div className="order-summary">
                     <h3>{language === 'he' ? 'סיכום הזמנה' : 'Order Summary'}</h3>
@@ -763,8 +599,33 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
                     </div>
                   </div>
 
-                  {paymentError && (
-                    <span className="error-message">{paymentError}</span>
+                  <p className="order-request-note">
+                    {language === 'he'
+                      ? 'לא מתבצע תשלום באתר. אחרי שליחת ההזמנה רזיאל ייצור איתך קשר בוואטסאפ להסדרת תשלום ומשלוח.'
+                      : 'No payment is taken on the site. After you send the order, Raziel will contact you on WhatsApp to arrange payment and shipping.'}
+                  </p>
+
+                  <label className="terms-consent">
+                    <input
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(event) => setAgreedToTerms(event.target.checked)}
+                    />
+                    <span>
+                      {language === 'he' ? (
+                        <>
+                          קראתי ואני מסכים/ה ל<a href="#terms" onClick={(event) => event.stopPropagation()}>תקנון</a> ול<a href="#privacy" onClick={(event) => event.stopPropagation()}>מדיניות הפרטיות</a>
+                        </>
+                      ) : (
+                        <>
+                          I have read and agree to the <a href="#terms" onClick={(event) => event.stopPropagation()}>Terms</a> and <a href="#privacy" onClick={(event) => event.stopPropagation()}>Privacy Policy</a>
+                        </>
+                      )}
+                    </span>
+                  </label>
+
+                  {orderError && (
+                    <span className="error-message">{orderError}</span>
                   )}
 
                   <div className="checkout-buttons">
@@ -779,16 +640,16 @@ const CheckoutPage = ({ cart, language, user, stockAlerts = {}, onUpdateQuantity
                     <button
                       type="submit"
                       className="checkout-btn-submit"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !agreedToTerms}
                     >
                       {isSubmitting ? (
                         <>
                           <Loader2 className="spinner" size={20} />
-                          {language === 'he' ? 'מעבד...' : 'Processing...'}
+                          {language === 'he' ? 'שולח...' : 'Sending...'}
                         </>
                       ) : (
                         <>
-                          {language === 'he' ? 'שלח הזמנה' : 'Place Order'}
+                          {language === 'he' ? 'שליחת הזמנה' : 'Send order request'}
                         </>
                       )}
                     </button>

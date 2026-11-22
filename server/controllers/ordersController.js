@@ -1,8 +1,42 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const { sendEmail } = require('../utils/sendEmail');
 
-const ORDER_STATUSES = ['Pending', 'Paid', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-const CURRENCIES = ['USD', 'ILS', 'EUR'];
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+async function notifyNewOrder(order) {
+  if (!process.env.ADMIN_EMAIL) return;
+  const phone = `${order.customer.phone.countryCode || ''}${order.customer.phone.number || ''}`;
+  const address = order.shippingAddress;
+  const lines = order.items
+    .map((item) => `<li>${escapeHtml(item.title)} × ${item.quantity} — $${item.total.toFixed(2)}</li>`)
+    .join('');
+
+  await sendEmail({
+    to: process.env.ADMIN_EMAIL,
+    subject: `New order request ${order.id} - Art of Raziel`,
+    html: `
+      <h2>New order request ${escapeHtml(order.id)}</h2>
+      <p>No payment was taken. Contact the customer to arrange payment and shipping.</p>
+      <p><strong>Name:</strong> ${escapeHtml(order.customer.fullName)}<br>
+         <strong>Email:</strong> ${escapeHtml(order.customer.email)}<br>
+         <strong>Phone:</strong> ${escapeHtml(phone)}</p>
+      <p><strong>${address.shippingMethod === 'pickup' ? 'Pickup' : 'Delivery'}:</strong>
+         ${escapeHtml(address.streetAddress)}, ${escapeHtml(address.city)}
+         ${escapeHtml(address.stateOrProvince || '')} ${escapeHtml(address.zipCode)}, ${escapeHtml(address.country)}</p>
+      <ul>${lines}</ul>
+      <p><strong>Total:</strong> $${order.totalAmount.toFixed(2)} USD</p>
+      ${order.notes ? `<p><strong>Notes:</strong> ${escapeHtml(order.notes)}</p>` : ''}
+    `,
+  });
+}
 
 function phoneToString(phone) {
   if (!phone) return '';
@@ -84,8 +118,10 @@ function readOrderInput(body) {
   const email = customer.email || body.email || '';
   const phone = phoneToString(customer.phone || body.phone);
   const country = String(shipping.country || body.country || '').trim().toUpperCase();
-  const currency = CURRENCIES.includes(body.currency) ? body.currency : 'USD';
-  const status = ORDER_STATUSES.includes(body.status) ? body.status : 'Pending';
+  // The catalog is priced in USD and no payment is taken on the site, so every
+  // new order is a USD order request waiting for Raziel. The client cannot set these.
+  const currency = 'USD';
+  const status = 'Pending';
 
   return {
     name: String(name).trim(),
@@ -99,8 +135,8 @@ function readOrderInput(body) {
     country,
     currency,
     status,
-    paymentId: body.paymentId || body.payment_id || null,
-    notes: body.notes || null,
+    paymentId: null,
+    notes: body.notes ? String(body.notes).slice(0, 2000) : null,
     items: Array.isArray(body.items) ? body.items : null,
   };
 }
@@ -208,24 +244,19 @@ exports.createOrder = async (req, res) => {
         await connection.query('UPDATE products SET stock = 0 WHERE id = ?', [productId]);
       }
 
-      const requestedPrice = toNumber(item.price ?? item.unit_price);
-      const catalogPrice = toNumber(product.price_usd ?? product.price) ?? 0;
-      const unitPrice = requestedPrice !== null && requestedPrice >= 0 ? requestedPrice : catalogPrice;
+      // Price and title always come from the catalog row, never from the request.
+      const unitPrice = toNumber(product.price_usd ?? product.price) ?? 0;
 
       lineItems.push({
         productId,
-        title: String(item.title || product.title || 'Product').slice(0, 255),
+        title: String(product.title || 'Product').slice(0, 255),
         unitPrice: roundMoney(unitPrice),
         quantity,
         lineTotal: roundMoney(unitPrice * quantity),
       });
     }
 
-    const computedTotal = roundMoney(lineItems.reduce((sum, item) => sum + item.lineTotal, 0));
-    const requestedTotal = toNumber((req.body || {}).totalAmount);
-    const totalAmount = requestedTotal !== null && requestedTotal >= 0
-      ? roundMoney(requestedTotal)
-      : computedTotal;
+    const totalAmount = roundMoney(lineItems.reduce((sum, item) => sum + item.lineTotal, 0));
     const orderNumber = `ORD-${Date.now()}`;
     const userId = optionalUserId(req);
 
@@ -273,12 +304,18 @@ exports.createOrder = async (req, res) => {
 
     await connection.commit();
 
+    const clientOrder = toClientOrder(orderRows[0], savedItems);
+    // Raziel learns about the order by email. Mail failures never fail the order.
+    notifyNewOrder(clientOrder).catch((mailError) => {
+      console.warn('New order email failed:', mailError.message);
+    });
+
     return res.status(201).json({
       success: true,
       message: 'Order created successfully',
       data: {
         id: orderId,
-        order: toClientOrder(orderRows[0], savedItems),
+        order: clientOrder,
       },
     });
   } catch (error) {

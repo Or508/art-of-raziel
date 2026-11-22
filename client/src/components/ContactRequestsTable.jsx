@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, Calendar, Mail, Phone, MessageSquare } from 'lucide-react';
 import './ContactRequestsTable.css';
+import { apiUrl } from '../utils/api';
 
 const ContactRequestsTable = ({ language }) => {
   const [requests, setRequests] = useState([]);
@@ -16,7 +17,7 @@ const ContactRequestsTable = ({ language }) => {
     const loadRequests = async () => {
       try {
         const token = localStorage.getItem('adminToken');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contact`, {
+        const response = await fetch(apiUrl('/api/contact'), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -45,7 +46,7 @@ const ContactRequestsTable = ({ language }) => {
   const handleStatusUpdate = async (id, newStatus) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contact/${id}/status`, {
+      const response = await fetch(apiUrl(`/api/contact/${id}/status`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

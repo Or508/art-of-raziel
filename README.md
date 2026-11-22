@@ -166,4 +166,15 @@ npm run build --prefix client
 - **Rate limits.** Auth routes allow 10 requests per 15 minutes. Contact submissions allow 8 per 15 minutes. Other writes allow 60 per 15 minutes.
 - **Errors.** A server failure returns a fixed message. SQL text is written to the server log, not to the client.
 - **Orders.** Creating an order is one transaction: the product row is locked, stock is checked, and the order plus its lines are inserted together.
-- **Still to replace before taking real payments.** `POST /api/payments/charge` approves a mock charge. It does not talk to a card processor. Point it at a live gateway before accepting customer payments. Email and Google Sheets are optional and are skipped when their variables are empty.
+- **No payment on the site.** An order is a request: it is saved as `Pending` in USD, priced from the catalog on the server (the browser cannot set prices, totals, or status), and `ADMIN_EMAIL` gets an email. Raziel arranges payment and shipping with the customer on WhatsApp. Email and Google Sheets are optional and are skipped when their variables are empty.
+
+## Deploy
+
+One Node service serves both the API and the built storefront, plus a hosted MySQL 8 database.
+
+- Build command: `npm run build` (installs `server/` and `client/`, then builds `client/dist`)
+- Start command: `npm start` (Express on `PORT`, serving `/api/*` and the storefront)
+- Health check: `GET /health`
+- Environment: everything in `.env.example`. Set `DB_SSL=true` for hosted MySQL that requires TLS. `VITE_WHATSAPP_NUMBER` must be set at build time. Leave `VITE_API_URL` unset so the storefront calls its own address.
+- Database: `npm start` runs `server/scripts/initDb.js` first. It creates missing tables, seeds the catalog from `server/database/seed-products.json` when `products` is empty, and creates the first admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` when there is none. Railway's `MYSQL*` variables are read directly.
+- Railway, step by step (Hebrew): `docs/DEPLOY-RAILWAY.md`.

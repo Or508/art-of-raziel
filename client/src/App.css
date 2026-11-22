@@ -2092,3 +2092,32 @@ body {
     font-size: 2.5rem;
   }
 }
+
+.catalog-status {
+  position: relative;
+  z-index: 2;
+  max-width: 640px;
+  margin: 48px auto;
+  padding: 28px 24px;
+  text-align: center;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 12px;
+  background: rgba(2, 2, 2, 0.8);
+}
+
+.catalog-status p {
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.05rem;
+}
+
+.catalog-retry-btn {
+  background: linear-gradient(135deg, #f9e498 0%, #d4af37 50%, #996515 100%);
+  color: #020202;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 22px;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  cursor: pointer;
+}

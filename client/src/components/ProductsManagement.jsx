@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Package, Edit, Trash2, Plus, Search, TrendingUp, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './ProductsManagement.css';
+import { apiUrl } from '../utils/api';
 
 const ProductsManagement = ({ language, products = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,7 +126,7 @@ const ProductsManagement = ({ language, products = [] }) => {
   const updateStockInline = async (productId, delta) => {
     try {
       const token = localStorage.getItem('adminToken') || '';
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${productId}/stock`, {
+      const response = await fetch(apiUrl(`/api/products/${productId}/stock`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, Calendar, MapPin } from 'lucide-react';
 import OrderDetailsModal from './OrderDetailsModal';
 import './OrdersTable.css';
+import { apiUrl } from '../utils/api';
 
 // Country flag emojis mapping
 const COUNTRY_FLAGS = {
@@ -34,7 +35,7 @@ const OrdersTable = ({ language }) => {
     const loadOrders = async () => {
       try {
         const token = localStorage.getItem('adminToken');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/orders`, {
+        const response = await fetch(apiUrl('/api/admin/orders'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -155,7 +156,7 @@ const OrdersTable = ({ language }) => {
     try {
       const token = localStorage.getItem('adminToken') || '';
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/orders/${encodeURIComponent(orderId)}/status`,
+        apiUrl(`/api/admin/orders/${encodeURIComponent(orderId)}/status`),
         {
           method: 'PATCH',
           headers: {

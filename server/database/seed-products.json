@@ -1,0 +1,156 @@
+[
+  {
+    "category": "מזוזות",
+    "title": "מזוזה גדולה",
+    "title_en": null,
+    "description": "נכתב בטהרה על ידי סופר סת\"ם",
+    "description_en": null,
+    "price": 250,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "מזוזות",
+    "title": "מזוזה בינונית",
+    "title_en": null,
+    "description": "כתיבה מהודרת בטהרה",
+    "description_en": null,
+    "price": 190,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "ביטול כישוף",
+    "title_en": null,
+    "description": "סגולה עוצמתית לביטול עין הרע וכשפים",
+    "description_en": null,
+    "price": 600,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע להצלחה",
+    "title_en": null,
+    "description": "פתיחת מזל והצלחה בכל מעשי ידיכם",
+    "description_en": null,
+    "price": 500,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע לשלום בית",
+    "title_en": null,
+    "description": "לחיזוק הקשר והרמוניה משפחתית",
+    "description_en": null,
+    "price": 450,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע לאהבה",
+    "title_en": null,
+    "description": "למציאת חן וקירוב לבבות",
+    "description_en": null,
+    "price": 450,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע חן וחסד ובטחון",
+    "title_en": null,
+    "description": "להשראת שלווה ובטחון עצמי",
+    "description_en": null,
+    "price": 500,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע לזיווג",
+    "title_en": null,
+    "description": "סגולה למציאת זיווג הגון",
+    "description_en": null,
+    "price": 450,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע לרפואה",
+    "title_en": null,
+    "description": "תפילה וסגולה לרפואת הנפש והגוף",
+    "description_en": null,
+    "price": 500,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע לדכאון",
+    "title_en": null,
+    "description": "לחיזוק הנפש ושמחת חיים",
+    "description_en": null,
+    "price": 500,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע לעין הרע",
+    "title_en": null,
+    "description": "הגנה רוחנית מלאה",
+    "description_en": null,
+    "price": 500,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע גמילה מעישון/אלכוהול/סמים",
+    "title_en": null,
+    "description": "חיזוק כוח הרצון לגמילה",
+    "description_en": null,
+    "price": 500,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "קמיעות",
+    "title": "קמיע לפרנסה",
+    "title_en": null,
+    "description": "פתיחת שערי שפע וברכה כלכלית",
+    "description_en": null,
+    "price": 500,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  },
+  {
+    "category": "חותמים",
+    "title": "חותם שלמה (4 יחידות)",
+    "title_en": null,
+    "description": "חותמים עתיקים להגנה ושמירה",
+    "description_en": null,
+    "price": 600,
+    "stock": 25,
+    "allow_preorder": false,
+    "image_url": null
+  }
+]

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Mail, Phone, Calendar, Clock, MessageSquare, UserCircle2 } from 'lucide-react';
 import './ContactRequestsTable.css';
+import { apiUrl } from '../utils/api';
 
 const MeetingsTable = ({ language }) => {
   const [meetings, setMeetings] = useState([]);
@@ -11,7 +12,7 @@ const MeetingsTable = ({ language }) => {
     const loadMeetings = async () => {
       try {
         const token = localStorage.getItem('adminToken');
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/meetings`, {
+        const res = await fetch(apiUrl('/api/admin/meetings'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
