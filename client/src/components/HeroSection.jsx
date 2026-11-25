@@ -1,22 +1,22 @@
 import React from 'react';
-import emblem from '../assets/emblem.svg';
+import WingedEmblem from './WingedEmblem';
 
 const HeroSection = ({ language, onViewCatalog, onBookMeeting }) => {
   const he = language === 'he';
 
   return (
     <header className="hero" id="home">
-      <img
-        className="hero-emblem"
-        src={emblem}
-        alt={
+      <div className="hero-arch beam" style={{ '--d': '3s' }}>
+      <WingedEmblem
+        label={
           he
-            ? 'הסמל של Art of Raziel: מגן דוד בתוך מדליון זהב עם כנפיים'
+            ? 'הסמל של Art of Raziel: מגן דוד במדליון זהב עם כנפיים'
             : 'Art of Raziel emblem: a Star of David in a gold medallion with wings'
         }
       />
       <p className="hero-wordmark">ART OF RAZIEL</p>
       <h1>{he ? 'אמנות קודש בעבודת יד' : 'Sacred art, made by hand'}</h1>
+      <div className="ornament-rule" aria-hidden="true"><span /></div>
       <p className="hero-sub">
         {he
           ? 'מזוזות, קמעות וחותמות שנכתבים בטהרה, ומגיעים אליכם ישירות מהאמן רזיאל.'
@@ -29,6 +29,7 @@ const HeroSection = ({ language, onViewCatalog, onBookMeeting }) => {
         <button type="button" className="pill pill-outline" onClick={onBookMeeting}>
           {he ? 'קביעת פגישה עם רזיאל' : 'Book a meeting with Raziel'}
         </button>
+      </div>
       </div>
     </header>
   );

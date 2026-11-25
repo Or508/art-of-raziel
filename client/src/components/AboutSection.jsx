@@ -7,7 +7,7 @@ const AboutSection = ({ language }) => {
   return (
     <section className="about" id="about">
       <div className="about-inner">
-        <div className="about-frame">
+        <div className="about-frame beam">
           {/* TODO: Raziel photo */}
           <img src={emblem} alt="" />
         </div>

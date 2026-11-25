@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import './App.css';
+import './sacred-fx.css';
 import AuthModal from './components/AuthModal';
 import AdminLoginModal from './components/AdminLoginModal';
 import HeroSection from './components/HeroSection';
+import WingedEmblem from './components/WingedEmblem';
 import TrustStrip from './components/TrustStrip';
 import AboutSection from './components/AboutSection';
 import MeetingBand from './components/MeetingBand';
@@ -17,6 +19,7 @@ import SiteFooter from './components/SiteFooter';
 import { formatStorePrice } from './utils/price';
 import { availableStock, stockLimitMessage } from './utils/stock';
 import { apiUrl } from './utils/api';
+import { catalogGroupFor, normalizeProductFromDB, productVisuals } from './utils/catalogProduct';
 
 const LEGAL_ROUTES = {
   '#privacy': 'privacy',
@@ -28,29 +31,6 @@ const LEGAL_ROUTES = {
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
 // --- Local Asset Imports (MUST use these, not external URLs) ---
-import mezuzahLargeImg from './assets/mezuzah-large.png';
-import mezuzahMediumImg from './assets/mezuzah-medium.png';
-import sealOfSolomonImg from './assets/seal-of-solomon.png';
-
-function catalogGroupFor(category, title, sourceCategory = '') {
-  const text = title || '';
-  const lower = text.toLowerCase();
-  const isSeal = sourceCategory === 'חותמים'
-    || text.includes('חותם')
-    || text.includes('שלמה')
-    || lower.includes('seal')
-    || lower.includes('solomon');
-  if (category === 'mezuzah') return 'mezuzah';
-  if (isSeal) return 'seal';
-  if (category === 'amulet') return 'amulet';
-  return 'other';
-}
-
-function isSealOfSolomonTitle(title) {
-  const text = title || '';
-  return text.includes('שלמה') || text.toLowerCase().includes('solomon');
-}
-
 function App() {
   const [products, setProducts] = useState([]);
   const [language, setLanguage] = useState('he'); // 'he' for Hebrew, 'en' for English
@@ -74,6 +54,7 @@ function App() {
   const [legalKey, setLegalKey] = useState(() => LEGAL_ROUTES[window.location.hash] || null);
   const [catalogError, setCatalogError] = useState(false);
   const [catalogAttempt, setCatalogAttempt] = useState(0);
+  const fetchProductsRef = useRef(() => {});
 
   useEffect(() => {
     const he = language === 'he';
@@ -164,7 +145,7 @@ function App() {
       price: 250,
       priceDisplay: '$250',
       category: 'mezuzah',
-      image: mezuzahLargeImg
+      image: null
     },
     {
       _id: '2',
@@ -175,7 +156,7 @@ function App() {
       price: 190,
       priceDisplay: '$190',
       category: 'mezuzah',
-      image: mezuzahMediumImg
+      image: null
     },
     // Amulets (קמעות)
     {
@@ -306,11 +287,16 @@ function App() {
     return baseMockProducts.map(product => {
       // Add default image for amulets without image
       const title = product.nameHe || product.nameEn || '';
-      const image = product.image || (isSealOfSolomonTitle(title) ? sealOfSolomonImg : null);
+      const visuals = productVisuals({
+        uploadedUrl: product.image_url,
+        category: product.category,
+        sourceCategory: '',
+        title,
+      });
 
       return {
         ...product,
-        image,
+        ...visuals,
         catalogGroup: catalogGroupFor(product.category, title),
         name: language === 'he' ? product.nameHe : product.nameEn,
         description: language === 'he' ? product.descriptionHe : product.descriptionEn,
@@ -322,61 +308,22 @@ function App() {
 
   // Fetch products from API (SQL Database)
   useEffect(() => {
-    const normalizeProductFromDB = (dbProduct) => {
-      // Convert SQL data structure to app structure
-      const category = dbProduct.category === 'מזוזות' ? 'mezuzah' : 
-                      dbProduct.category === 'קמיעות' ? 'amulet' : 
-                      dbProduct.category === 'חותמים' ? 'amulet' : 'other';
-      
-      // Use local images for mezuzahs and seals if no image_url in SQL
+    const normalizeProduct = (dbProduct) => {
+      const category = dbProduct.category === 'מזוזות' ? 'mezuzah'
+        : dbProduct.category === 'קמיעות' ? 'amulet'
+        : dbProduct.category === 'חותמים' ? 'amulet'
+        : 'other';
       const title = dbProduct.title || '';
-
-      // Try to find matching mock product to reuse English translations
       const matchingMock = baseMockProducts.find(mock =>
         mock.nameHe === title ||
-        (mock.price === (dbProduct.price_usd || dbProduct.price) && mock.category === category)
+        (mock.price === (dbProduct.price_usd ?? dbProduct.price) && mock.category === category)
       );
-      const isLargeMezuzah = category === 'mezuzah' && (
-        title.includes('גדולה') || 
-        title.includes('גדול') || 
-        title.toLowerCase().includes('large')
-      );
-      const isMediumMezuzah = category === 'mezuzah' && (
-        title.includes('בינונית') || 
-        title.includes('בינוני') || 
-        title.toLowerCase().includes('medium')
-      );
-      let image = dbProduct.image_url || null;
-      if (!image) {
-        if (isLargeMezuzah) {
-          image = mezuzahLargeImg;
-        } else if (isMediumMezuzah) {
-          image = mezuzahMediumImg;
-        } else if (isSealOfSolomonTitle(title)) {
-          image = sealOfSolomonImg;
-        }
-      }
-      
-      return {
-        _id: dbProduct.id,
-        nameHe: title,
-        // Prefer explicit SQL English fields, otherwise fall back to mock translations if available
-        nameEn: dbProduct.title_en || (matchingMock ? matchingMock.nameEn : title),
-        descriptionHe: dbProduct.description || (matchingMock ? matchingMock.descriptionHe : ''),
-        descriptionEn: dbProduct.description_en || dbProduct.description || (matchingMock ? matchingMock.descriptionEn : ''),
-        price: dbProduct.price_usd || dbProduct.price || 0,
-        priceDisplay: `$${dbProduct.price_usd || dbProduct.price || 0}`,
-        category: category,
-        catalogGroup: catalogGroupFor(category, title, dbProduct.category),
-        image: image,
-        stock: typeof dbProduct.stock === 'number' ? dbProduct.stock : 0,
-        allow_preorder: !!dbProduct.allow_preorder
-      };
+      return normalizeProductFromDB(dbProduct, matchingMock);
     };
 
     const updateProductsForLanguage = (productsList) => {
       return productsList.map(product => {
-        const normalized = normalizeProductFromDB(product);
+        const normalized = normalizeProduct(product);
         return {
           ...normalized,
           name: language === 'he' ? normalized.nameHe : normalized.nameEn,
@@ -411,7 +358,7 @@ function App() {
             const seen = new Map();
             return productsList.filter(product => {
               try {
-                const normalized = normalizeProductFromDB(product);
+                const normalized = normalizeProduct(product);
                 // Use id as primary key, or title+price as fallback
                 const key = normalized._id || `${normalized.nameHe || normalized.nameEn}_${normalized.price}`;
                 
@@ -457,8 +404,11 @@ function App() {
       }
     };
 
+    fetchProductsRef.current = fetchProducts;
     fetchProducts();
   }, [language, mockProducts, catalogAttempt]);
+
+  const refreshProducts = useCallback(() => fetchProductsRef.current(), []);
 
   // Removed - now handled in ProductCatalog component for better code splitting
 
@@ -648,6 +598,7 @@ function App() {
       
       <header className="site-header">
         <div className="site-header-inner">
+          <span className="bsd">בס״ד</span>
           <a
             className="brand"
             href="#home"
@@ -656,7 +607,14 @@ function App() {
               handleGoHome();
             }}
           >
-            <img src={emblemImg} alt="" />
+            <span className="brand-mark">
+              <WingedEmblem
+                withHalo={false}
+                label={language === 'he'
+                  ? 'הסמל של Art of Raziel: מגן דוד במדליון זהב עם כנפיים'
+                  : 'Art of Raziel emblem: a Star of David in a gold medallion with wings'}
+              />
+            </span>
             <span className="brand-name">ART OF RAZIEL</span>
           </a>
 
@@ -811,6 +769,7 @@ function App() {
             onBack={() => setShowDashboard(false)}
             language={language}
             products={products}
+            refreshProducts={refreshProducts}
           />
         </Suspense>
       ) : (

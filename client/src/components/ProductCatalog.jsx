@@ -51,6 +51,7 @@ const ProductCatalog = ({ products, language, addToCart, filter, onFilterChange 
         <div>
           <p className="eyebrow">THE COLLECTION</p>
           <h2>{he ? 'הקטלוג' : 'The Collection'}</h2>
+          <div className="ornament-rule" aria-hidden="true"><span /></div>
         </div>
         <div className="catalog-chips" role="group" aria-label={he ? 'סינון לפי סוג' : 'Filter by type'}>
           {CHIPS.map((chip) => (
@@ -68,17 +69,21 @@ const ProductCatalog = ({ products, language, addToCart, filter, onFilterChange 
       </div>
 
       <div className="product-grid">
-        {shown.map((product) => (
-          <ProductCard key={productKey(product)} product={product} language={language} addToCart={addToCart} />
+        {shown.map((product, index) => (
+          <ProductCard key={productKey(product)} product={product} language={language} addToCart={addToCart} index={index} />
         ))}
       </div>
     </section>
   );
 };
 
-const ProductCard = ({ product, language, addToCart }) => {
+const ProductCard = ({ product, language, addToCart, index = 0 }) => {
   const he = language === 'he';
-  const imageSrc = product.image || product.image_url || null;
+  const imageSrc = product.image || null;
+  const title = product.name || '';
+  const imageAlt = product.imageIsIllustration
+    ? `${title}${he ? ' (תמונה להמחשה)' : ' (illustration)'}`
+    : title;
   const stockKnown = Number.isFinite(Number(product.stock));
   const stock = stockKnown ? Number(product.stock) : Infinity;
   const allowPreorder = !!product.allow_preorder;
@@ -120,11 +125,14 @@ const ProductCard = ({ product, language, addToCart }) => {
 
   return (
     <article className="product-card">
-      <div className="product-media">
+      <div className="product-media beam" style={{ '--d': `${4.5 + (index % 4) * 0.8}s` }}>
         {imageSrc ? (
-          <img src={imageSrc} alt={product.name || ''} />
+          <img src={imageSrc} alt={imageAlt} />
         ) : (
           <img className="product-emblem" src={emblem} alt="" />
+        )}
+        {product.imageIsIllustration && (
+          <span className="illustration-label">{he ? 'תמונה להמחשה' : 'Illustration only'}</span>
         )}
       </div>
       <div className="product-body">
