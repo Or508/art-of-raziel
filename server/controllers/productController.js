@@ -1,14 +1,33 @@
+const fs = require('fs');
+const path = require('path');
 const Product = require('../models/Product');
+
+function catalogFromSeed() {
+  const seedPath = path.resolve(__dirname, '../database/seed-products.json');
+  const products = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+  return products.map((product, index) => ({
+    id: index + 1,
+    category: product.category,
+    title: product.title,
+    title_en: product.title_en || null,
+    description: product.description || '',
+    description_en: product.description_en || null,
+    price: product.price,
+    price_usd: product.price,
+    stock: product.stock ?? 0,
+    allow_preorder: product.allow_preorder ? 1 : 0,
+    image_url: product.image_url || null,
+    is_active: 1,
+  }));
+}
 
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.getAll();
     res.status(200).json(products);
   } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({
-      message: 'שגיאה בשליפת קטלוג המוצרים',
-    });
+    console.error('Catalog database unavailable, serving the built-in list:', error.message);
+    res.status(200).json(catalogFromSeed());
   }
 };
 

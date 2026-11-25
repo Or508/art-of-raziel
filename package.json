@@ -11,7 +11,7 @@
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "build": "npm ci --prefix server --omit=dev && npm ci --prefix client --include=dev && npm run build --prefix client",
-    "start": "node server/scripts/initDb.js && node server/app.js",
+    "start": "node server/app.js",
     "db:init": "node server/scripts/initDb.js"
   },
   "devDependencies": {
