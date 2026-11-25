@@ -50,7 +50,31 @@ body, .app-container { background: var(--ground); font-weight: 300; }
 .brand-mark { width: 76px; height: 46px; flex: 0 0 auto; display: flex; align-items: center; }
 .brand-mark .winged-emblem { width: 100%; height: auto; }
 @media (max-width: 768px) {
-  .brand-mark { width: 58px; height: 36px; }
+  .site-header-inner { padding: 10px 16px; gap: 8px; }
+  .bsd { font-size: 13px; flex: 0 0 auto; }
+  .brand { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+  .brand-mark { width: 46px; height: 28px; }
+  .brand-name { font-size: 12px; letter-spacing: 0.04em; overflow: hidden; text-overflow: ellipsis; }
+  .nav-tools { margin-inline-start: auto; flex: 0 0 auto; gap: 8px; }
+  .hero { padding: 20px 16px 40px; }
+  .hero-arch {
+    padding: 24px 14px 28px;
+    border-radius: 150px 150px var(--radius) var(--radius) / 110px 110px var(--radius) var(--radius);
+  }
+  .hero-wordmark { letter-spacing: 0.18em; font-size: 12px; margin: 12px 0 8px; }
+  .hero h1 { font-size: 30px; }
+  .emblem-stage { width: min(260px, 86%); }
+  .catalog { padding: 40px 16px; }
+  .catalog-chips { gap: 6px; }
+  .chip { padding: 0 12px; font-size: 14px; }
+  .product-grid { gap: 10px; }
+  .product-card .pill { padding: 0 8px; min-height: 44px; font-size: 13px; }
+  .illustration-label { font-size: 11px; padding: 3px 8px; }
+  .about, .meeting-band { padding: 56px 16px; }
+  .meeting-box { padding: 32px 16px; }
+  .site-footer-inner,
+  .site-footer-brand,
+  .site-footer-links { align-items: center; text-align: center; }
 }
 .nav-link { position: relative; font-size: 15px; }
 .nav-link::after {
